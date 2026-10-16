@@ -38,7 +38,7 @@
     switch (cmd) {
       case "close": case "destroy": post({ type: "win", action: "close" }); return null;
       case "hide": case "minimize": post({ type: "win", action: "minimize" }); return null;
-      case "toggle_maximize": case "maximize": case "unmaximize": maximized = !maximized; post({ type: "win", action: "toggleMax" }); return null;
+      case "toggle_maximize": case "maximize": case "unmaximize": { const want = cmd === "toggle_maximize" ? !maximized : cmd === "maximize"; if (want !== maximized) { maximized = want; post({ type: "win", action: "toggleMax" }); } return null; }
       case "set_title": post({ type: "title", title: String(args?.value ?? "") }); return null;
       case "start_dragging": return null;
       case "is_maximized": return maximized;

@@ -101,7 +101,7 @@ setInterval(() => {
 const settings = { notch: true, notify: false };
 const S = { tab: "pro", sub: "live", leagues: new Set(["nord", "sued"]), open: null, game: 0, meSel: null, clipSel: 0, rec: null };
 const main = $("#main");
-segments($("#tabs"), (b) => { S.tab = b.dataset.view; render(); });
+segments($("#tabs"), (b) => { S.tab = b.dataset.view; S.open = null; render(); });
 
 // ---------- Pro ----------
 const inLg = (s) => S.leagues.has(s.lg);
@@ -267,7 +267,8 @@ function selectClip(i) { S.clipSel = i; const c = CLIPS[i]; ed.t = 0; ed.a = 0; 
 function bindStudio() {
   $$("canvas[data-th]").forEach((cv) => scene(cv.getContext("2d"), cv.width, cv.height, 3, CLIPS[+cv.dataset.th].hue, []));
   const c = CLIPS[S.clipSel];
-  const strip = $("#strip"); if (strip && c) { const x = strip.getContext("2d"); for (let i = 0; i < 40; i++) { scene(x, strip.width / 40, strip.height, (i / 40) * c.dur, c.hue, []); /* Streifen aus kleinen Bildern */ } x.clearRect(0, 0, 0, 0); const sx = strip.getContext("2d"); sx.globalCompositeOperation = "source-over"; for (let i = 0; i < 40; i++) { sx.save(); sx.translate((strip.width / 40) * i, 0); sx.beginPath(); sx.rect(0, 0, strip.width / 40, strip.height); sx.clip(); scene(sx, strip.width / 40, strip.height, (i / 40) * c.dur, c.hue, []); sx.restore(); } }
+  const strip = $("#strip");
+  if (strip && c) { const sx = strip.getContext("2d"), cw = strip.width / 40; for (let i = 0; i < 40; i++) { sx.save(); sx.translate(cw * i, 0); sx.beginPath(); sx.rect(0, 0, cw, strip.height); sx.clip(); scene(sx, cw, strip.height, (i / 40) * c.dur, c.hue, []); sx.restore(); } }
   $("#rec").onclick = () => {
     if (S.rec) { const secs = Math.round((Date.now() - S.rec) / 1000); S.rec = null; toast(`Aufnahme beendet (${fmtT(secs)})`); }
     else { S.rec = Date.now(); toast("Aufnahme gestartet (Demo)"); }
@@ -312,7 +313,7 @@ function render(soft = false) {
     if (S.tab === "pro" && S.open) {
       const s = SERIES.find((x) => x.id === S.open), g = s.games[S.game];
       if (!g) return;
-      if (g.state === "live" || $("#gdet")?.dataset.done !== "1") { const det = $("#gdet"); if (det && !det.matches(":hover")) { det.innerHTML = gameBody(s, g); det.dataset.done = g.state === "live" ? "" : "1"; bindChart(s, g); } else if (det) { /* Maus darüber: Diagramm nicht verwerfen */ } }
+      if (g.state === "live" || $("#gdet")?.dataset.done !== "1") { const det = $("#gdet"); if (det) { det.innerHTML = gameBody(s, g); det.dataset.done = g.state === "live" ? "" : "1"; bindChart(s, g); }  }
       return;
     }
     if (S.tab === "pro" && (S.sub === "live" || S.sub === "plan")) return paintPro();
@@ -345,7 +346,6 @@ main.addEventListener("click", (e) => { const m = e.target.closest("[data-m]"); 
 
 // Tabs
 new MutationObserver(() => {}).observe(main, { childList: true });
-$("#tabs").addEventListener("click", () => { S.open = null; });
 const pop = $("#pop");
 $("#gear").onclick = () => {
   pop.hidden = !pop.hidden;

@@ -94,6 +94,7 @@
   const search = ({ q, deep, courses }) => {
     const t0 = performance.now();
     const words = String(q).toLowerCase().split(/\s+/).filter((w) => w.length > 1);
+    if (!words.length) return { hits: [], ms: 1, indexed: true, words };
     const stems = deep ? words.map((w) => (w.length > 5 ? w.slice(0, -2) : w)) : words;
     const hits = [];
     CORPUS.forEach(([cid, title, ext, paras], i) => {

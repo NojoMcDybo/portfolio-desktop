@@ -84,6 +84,7 @@ export function runIntro({ skip = false } = {}) {
     const finish = async () => {
       removeEventListener("pointermove", tilt);
       removeEventListener("resize", layout);
+      removeEventListener("wheel", onWheel);
       ui.classList.add("gone");
       // Zoom: Gerät wird zum Vollbild, Ecken werden eckig, der Rand blendet aus
       const dr0 = parseFloat(device.style.getPropertyValue("--dr"));
@@ -144,6 +145,7 @@ export function runIntro({ skip = false } = {}) {
     document.getElementById("open-btn").addEventListener("click", open);
     document.getElementById("skip-btn").addEventListener("click", () => {
       busy = true;
+      removeEventListener("pointermove", tilt); removeEventListener("resize", layout); removeEventListener("wheel", onWheel);
       document.body.classList.remove("booting");
       document.getElementById("desktop").removeAttribute("aria-hidden");
       stage.style.transition = "opacity .3s";
@@ -154,6 +156,7 @@ export function runIntro({ skip = false } = {}) {
       if (!document.getElementById("stage")) return removeEventListener("keydown", key);
       if (["Enter", " ", "ArrowRight", "ArrowDown"].includes(e.key) && document.activeElement?.id !== "skip-btn") { e.preventDefault(); open(); }
     });
-    addEventListener("wheel", (e) => { if (!busy && e.deltaY > 12) open(); }, { passive: true });
+    const onWheel = (e) => { if (!busy && e.deltaY > 12) open(); };
+    addEventListener("wheel", onWheel, { passive: true });
   });
 }

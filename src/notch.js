@@ -53,7 +53,7 @@ export function createNotch(root) {
   const active = () => settings.order.filter((id) => settings.on[id] && isLive(id));
   function isLive(id) {
     if (id === "music") return d.playing;
-    if (id === "timer") return d.timerRun || d.timerLeft < d.timerTotal;
+    if (id === "timer") return d.timerRun || (d.timerLeft > 0 && d.timerLeft < d.timerTotal);
     return true;
   }
   const want = () => {

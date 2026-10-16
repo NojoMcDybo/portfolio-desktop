@@ -172,7 +172,7 @@ export class WM {
     const dx = t ? t.x + t.width / 2 - (w.x + w.w / 2) : 0;
     const dy = t ? t.y + t.height / 2 - (w.y + w.h / 2) : 200;
     const anim = w.el.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${dx}px,${dy}px) scale(.08)`, opacity: 0 }], { duration: 420, easing: "cubic-bezier(.5,0,.75,.4)" });
-    anim.onfinish = () => { w.el.hidden = true; w.el.style.display = "none"; };
+    anim.onfinish = () => { if (!w.min) return; w.el.hidden = true; w.el.style.display = "none"; };
     if (this.front === w) { this.front = null; this.#emit("focus", null); }
     this.#emit("change");
   }
