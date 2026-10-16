@@ -3,7 +3,7 @@ import { APPS, LEARN, MORE, byId } from "./apps.js";
 import { runIntro } from "./fold.js";
 import { WM, h } from "./wm.js";
 import { appFooter, siteFooter, buildLearn, buildWelcome } from "./chrome.js";
-import { createNotch } from "./notch.js";
+import { createNotchHost } from "./notch-host.js";
 import { initStreamdock } from "./streamdock-demo.js";
 import { I } from "./icons.js";
 import { animate, stagger, springValue, lift, POP, SPRING } from "./motion.js";
@@ -13,7 +13,16 @@ const REPO = "https://github.com/NojoMcDybo/portfolio-desktop";
 const NEBEL = { ...MORE.find((m) => m.id === "fogylation"), name: "nebel. Simulator", icon: "assets/icons/nebel.svg" };
 
 const wm = new WM($("#windows"));
-const notch = createNotch($("#notch-root"));
+// Notch: die echte Oberfläche in einem durchsichtigen Fenster über dem Desktop; „Einstellungen“ in der Notch öffnet das Notch-Fenster
+const notch = createNotchHost({
+  toast: (t) => toast(t),
+  openSettings: (tab) => {
+    const w = wm.get("notch");
+    if (w) return w.min ? wm.restore(w) : wm.focus(w);
+    const a = byId("notch");
+    openApp({ ...a, page: a.page + (tab ? "#" + tab : "") });
+  },
+});
 
 // ---------- Fenster öffnen ----------
 function openApp(app) {
@@ -189,7 +198,7 @@ document.querySelector('[data-menu="hilfe"]').addEventListener("click", (e) =>
   menubarMenu(e.currentTarget, [
     { label: "Fenster ziehen: oben anfassen", dis: true },
     { label: "Größe ändern: an Rand oder Ecke ziehen", dis: true },
-    { label: "Notch: Maus an den oberen Rand", dis: true },
+    { label: "Notch: Maus an den oberen Rand, Ränder zum Andocken", dis: true },
     { label: "Installer: unten in jedem Programmfenster", dis: true },
     { sep: true },
     { label: "Willkommen öffnen", fn: openWelcome },
@@ -200,12 +209,8 @@ const tick = () => { clock.textContent = new Date().toLocaleString("de-DE", { we
 tick(); setInterval(tick, 15000);
 
 // ---------- Nachrichten der Programme ----------
-const settingsReply = (win) => win?.frame?.contentWindow?.postMessage({ portfolio: 1, type: "notch-settings", settings: notch.get() }, location.origin);
 wm.on("bus", (name, data, win) => {
-  if (name === "notch:alert") notch.alert(data.title, data.text, data.ms);
-  else if (name === "notch:get") settingsReply(win);
-  else if (name === "notch:set") notch.set(data);
-  else if (name === "notch:timer") notch.startTimer(data.sec);
+  if (name === "notch:alert") notch.alert({ title: data.title, text: data.text, ms: data.ms, app: win?.title ?? "Desktop" });
   else if (name === "open") { const a = byId(data.app); a ? openApp(a) : data.app === "nebel" && openNebel(); }
   else if (name === "toast") toast(data.text);
   else if (name === "window:open") openFromApp(data, win);
@@ -225,7 +230,6 @@ function openFromApp(d, from) {
   if (d.bare) w.el.classList.add("bare");
   if (d.max) wm.toggleMax(w);
 }
-notch.onChange(() => settingsReply(wm.get("notch")));
 initStreamdock(wm);
 
 let toastT = 0, toastA = null;
@@ -257,6 +261,6 @@ runIntro({ skip, onReveal: bootReveal }).then(() => {
     const first = params.get("open");
     if (first) { const a = byId(first); a ? openApp(a) : first === "learn" ? openLearn() : first === "nebel" ? openNebel() : openWelcome(); }
     else openWelcome();
-    if (!first) notch.alert("Willkommen", "Fahr mit der Maus über mich – ich zeige, was gerade läuft.", 4200);
+    if (!first) notch.alert({ title: "Willkommen", text: "Fahr mit der Maus über mich – ich zeige, was gerade läuft.", ms: 7000 });
   }, 1100);
 });

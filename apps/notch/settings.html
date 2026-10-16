@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <script src="../../shim/tauri-shim.js"></script>
+    <script src="../../shim/app-notch.js"></script>
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notch – Einstellungen</title>
+    <script type="module" crossorigin src="./assets/settings-XiHvLdnF.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/nojo-ui-zcHd3ivT.js">
+    <link rel="stylesheet" crossorigin href="./assets/nojo-ui-2KxZuYRR.css">
+    <link rel="stylesheet" crossorigin href="./assets/settings-DjAHPlMY.css">
+  </head>
+  <body class="n-window">
+    <!-- Gemeinsame Designsprache (src/nojo). Keine Windows-Titelleiste: der Kopf ist die Zieh-Fläche,
+         Fensterknöpfe als Glaspille oben rechts (settings.ts). -->
+    <section class="settings-panel" aria-label="Einstellungen">
+      <div class="panel-head" data-tauri-drag-region>
+        <div data-tauri-drag-region>
+          <div class="eyebrow" data-tauri-drag-region>DEINE NOTCH</div>
+          <h2 data-tauri-drag-region>Einstellungen</h2>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <!-- Reiter schweben als Liquid Glass ueber dem Inhalt (der darunter durchscrollt) -->
+        <nav class="settings-tabs n-seg n-liquid panel" role="tablist">
+          <button role="tab" data-tab="display">Anzeige</button>
+          <button role="tab" data-tab="dock">Andocken</button>
+          <button role="tab" data-tab="sport">Sport</button>
+          <button role="tab" data-tab="share">iPhone</button>
+          <button role="tab" data-tab="app">App</button>
+        </nav>
+        <!-- Anzeige: kleine Notch + Rangliste -->
+        <div class="pane" data-pane="display">
+          <div class="notch-preview stage" data-dock="top">
+            <div class="pv-notch"><div class="compact"><div class="c-lead"></div><div class="c-trail"></div></div></div>
+            <div class="pv-empty">Gerade nichts zu zeigen</div>
+          </div>
+          <div class="pv-bar">
+            <div class="segmented compact pv-mode" role="group" aria-label="Vorschau">
+              <button data-mode="live">Live</button>
+              <button data-mode="demo">Ausprobieren</button>
+            </div>
+          </div>
+
+          <details class="settings-group demo" open>
+            <summary><span>Ausprobieren</span></summary>
+            <div class="group-body">
+              <div class="field">Was gerade läuft<div class="chips demo-chips"></div></div>
+              <label class="field"><span class="d-bpm-label"></span><input type="range" class="d-bpm" min="60" max="200" step="1" value="96" aria-label="Puls" /></label>
+              <label class="field"><span class="d-bg-label"></span><input type="range" class="d-bg" min="40" max="300" step="1" value="112" aria-label="Blutzucker" /></label>
+              <button class="button secondary full d-flip">Folio: umblättern</button>
+            </div>
+          </details>
+
+          <div class="field" role="group" aria-label="Gleichzeitig zeigen">Gleichzeitig zeigen
+            <div class="segmented compact">
+              <button data-slots="1">Eins</button>
+              <button data-slots="2">Zwei</button>
+            </div>
+          </div>
+
+          <div class="field rank-field">Rangliste
+            <ol class="rank" aria-label="Rangliste"></ol>
+          </div>
+          <p class="fine"><button class="link-button reset">Auf Standard zurücksetzen</button></p>
+        </div>
+
+        <!-- Andocken -->
+        <div class="pane" data-pane="dock" hidden>
+          <div class="field" role="group" aria-label="Kante">Kante
+            <div class="segmented compact">
+              <button data-dock="top">Oben</button>
+              <button data-dock="left">Links</button>
+              <button data-dock="right">Rechts</button>
+            </div>
+          </div>
+          <div class="dock-options"></div>
+        </div>
+
+        <!-- Live-Sport: Wettbewerbe, Lieblingsteams, Aufklappen (settings.ts -> renderSport) -->
+        <div class="pane" data-pane="sport" hidden>
+          <div class="sport-options"></div>
+        </div>
+
+        <!-- iPhone: Dateien senden und empfangen (LocalSend, Browser) -->
+        <div class="pane" data-pane="share" hidden>
+          <div class="share-options"></div>
+        </div>
+
+        <!-- App -->
+        <div class="pane" data-pane="app" hidden>
+          <div class="profile-card">
+            <div>
+              <div class="eyebrow">NOTCH</div>
+              <h3 class="app-version">Version</h3>
+            </div>
+          </div>
+          <!-- Tastenkuerzel: Tastatur und Controller selbst belegen (settings.ts -> renderShortcuts) -->
+          <div class="shortcut-options"></div>
+          <!-- Sprachassistent: OpenAI Realtime (mini Standard) oder Claude (settings.ts -> voice) -->
+          <div class="field" role="group" aria-label="Sprachassistent">Sprachassistent
+            <div class="segmented compact"><button data-engine="openai">OpenAI Realtime</button><button data-engine="claude">Claude</button></div>
+          </div>
+          <div class="field openai-model" role="group" aria-label="OpenAI-Modell">Modell
+            <div class="segmented compact"><button data-omodel="mini">mini · günstig</button><button data-omodel="full">2.1 · genauer</button></div>
+          </div>
+          <!-- „Hey Jarvis“: lokale Spracherkennung des Worts (src/wake/), startet den Assistenten -->
+          <div class="field" role="group" aria-label="Hey Jarvis">„Hey Jarvis“
+            <div class="segmented compact"><button data-wake="off">Aus</button><button data-wake="on">An</button></div>
+            <small>Das Mikrofon hört dann ständig mit, aber nur hier auf dem PC auf dieses eine Wort; erst danach geht etwas an OpenAI. Windows zeigt dabei das Mikrofon-Symbol.</small>
+          </div>
+          <!-- Jarvis M2c: Programme schon beim Sprechen starten (Laya-Modell, laya.rs / jarvis-live.ts) -->
+          <div class="field" role="group" aria-label="Schon beim Sprechen handeln">Schon beim Sprechen handeln
+            <div class="segmented compact"><button data-early="off">Aus</button><button data-early="on">An</button></div>
+            <small class="early-status" role="status">–</small>
+          </div>
+          <!-- Spotify: Playlists und Lieblingssongs direkt abspielen (spotify.rs, OAuth mit PKCE) -->
+          <label class="field">Spotify-Client-ID
+            <input class="text-input sp-client" autocomplete="off" spellcheck="false" placeholder="32 Zeichen aus deiner Spotify-App">
+            <small class="sp-status" role="status">–</small>
+          </label>
+          <div class="button-row">
+            <button class="button secondary sp-connect">Mit Spotify verbinden</button>
+            <button class="button secondary sp-disconnect" hidden>Trennen</button>
+          </div>
+          <p class="fine">Optional: Ohne Verbindung bedient Jarvis die Spotify-App selbst (Playlists, Lieblingssongs, Songs) – das geht für alle. Mit Verbindung geht es schneller und auch ohne geöffnete App (Spotify Premium; Spotify erlaubt je Entwickler-App nur 5 Nutzer). Einmalig auf developer.spotify.com › Dashboard › Create app: Redirect URI <code>http://127.0.0.1:8738/callback</code>, „Web API“ ankreuzen, speichern, dann die Client ID hier eintragen. Ein geheimer Schlüssel ist nicht nötig; die Anmeldung läuft im Browser.</p>
+          <div class="claude-only" hidden>
+            <div class="field" role="group" aria-label="Claude-Modell">Claude-Modell
+              <div class="segmented compact"><button data-cmodel="haiku">Haiku · günstig</button><button data-cmodel="sonnet">Sonnet</button><button data-cmodel="opus">Opus</button></div>
+            </div>
+            <label class="field">Claude-API-Schlüssel
+              <input class="text-input ckey-input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+              <small class="ckey-status" role="status">–</small>
+            </label>
+            <div class="button-row">
+              <button class="button secondary ckey-save">Prüfen &amp; speichern</button>
+              <button class="button secondary ckey-remove" hidden>Entfernen</button>
+            </div>
+            <p class="fine">Claude hat keine eigene Sprachschnittstelle: Die Notch nimmt deinen Satz auf, OpenAI schreibt ihn mit und liest die Antwort vor (dafür bleibt der OpenAI-Schlüssel nötig), Claude entscheidet und bedient die Notch. Antworten kommen dadurch etwa 1–2 s später. Schlüssel anlegen: platform.claude.com › API Keys.</p>
+          </div>
+          <label class="field">OpenAI-API-Schlüssel
+            <input class="text-input key-input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+            <small class="key-status" role="status">–</small>
+          </label>
+          <div class="button-row">
+            <button class="button secondary key-save">Prüfen &amp; speichern</button>
+            <button class="button secondary key-remove" hidden>Entfernen</button>
+          </div>
+          <p class="fine">Der Schlüssel wird bei OpenAI geprüft und mit Windows verschlüsselt nur auf diesem PC gespeichert. Die Notch zeigt ihn danach nie wieder vollständig an. Schlüssel anlegen: platform.openai.com › API keys.</p>
+        </div>
+      </div>
+    </section>
+    <div class="sr" aria-live="polite"></div>
+  </body>
+</html>

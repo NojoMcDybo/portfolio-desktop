@@ -18,7 +18,9 @@ Kein Framework: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-M
 
 **Echte Oberflächen:** Arena, Kursbuch und Streamdock (Tauri) sowie Haze (Electron) sind die echten Oberflächen der Programme. `tools/build-apps.mjs` baut sie mit ihrem eigenen vite nach `apps/<name>/`. Die Programme sprechen über `window.__TAURI_INTERNALS__` mit ihrem Rust-Teil; hier beantwortet `shim/tauri-shim.js` dieselben Aufrufe mit Beispieldaten und gibt Fensterbefehle (schließen, minimieren, ziehen) an den Desktop weiter. Alle Daten sind erfunden: Vereine, Kurse, Kanäle, Termine.
 
-**Nachbauten:** *Vantage* (Quellcode privat) und die *Notch-Einstellungen* sind von Hand geschrieben (`apps/vantage`, `apps/notch`). Die Notch oben auf dem Desktop ist ein Nachbau der echten Notch für den Browser.
+**Notch:** Die Notch oben auf dem Desktop und ihr Einstellungsfenster sind die echten Oberflächen aus dem Notch-Repo (`apps/notch`: `index.html` = Notch in einem durchsichtigen Vollbild-iframe, `settings.html` = Einstellungen). Ihre „Rust-Seite“ ist `src/notch-backend.js` (Musik, Blutzucker, Puls, Sport, Timer/Pomodoro, Ablage, Einstellungen mit den Datenformen der echten App), `src/notch-host.js` meldet, ob der Zeiger über der Form liegt (in der echten App fragt Rust die Maus ab). Meldungen anderer Programme (Arena-Tor, Vantage-Ergebnis) erscheinen dort als Activity.
+
+**Nachbau:** Nur *Vantage* (Quellcode privat) ist von Hand geschrieben (`apps/vantage`).
 
 **Lernseiten und Simulator** sind die echten Seiten auf GitHub Pages, eingebettet in ein Fenster; nichts davon ist kopiert.
 
