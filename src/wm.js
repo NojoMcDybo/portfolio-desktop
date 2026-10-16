@@ -77,6 +77,7 @@ export class WM {
       win.frame = f;
       body.append(f, loader);
       setTimeout(() => loader.classList.add("done"), 6000);
+      if (!spec.sandbox) this.#observeScale(win);
     }
     spec.build?.(body, win);
 
@@ -106,6 +107,17 @@ export class WM {
     this.focus(win);
     this.#emit("change");
     return win;
+  }
+
+  // Kleine Bildschirme: Programme sind für Fenster ab ca. 900 px gebaut. Statt sie zu quetschen, zeigt das Fenster sie verkleinert.
+  #observeScale(w) {
+    const fit = () => {
+      const f = w.frame;
+      if (!isSmall()) { f.removeAttribute("style"); return; }
+      const BW = 900, s = Math.min(1, w.body.clientWidth / BW);
+      Object.assign(f.style, { width: BW + "px", height: w.body.clientHeight / s + "px", right: "auto", bottom: "auto", transformOrigin: "0 0", transform: `scale(${s})` });
+    };
+    new ResizeObserver(fit).observe(w.body);
   }
 
   #apply(w) {

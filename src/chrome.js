@@ -11,7 +11,7 @@ export function appFooter(app, win) {
   const f = h("footer", "win-foot");
   const pub = app.sourceRepo !== null;
   f.innerHTML = `
-    <div class="wf-id"><img src="${app.icon}" alt=""><b>${esc(app.name)}</b><span>${esc(app.tag)}</span></div>
+    <div class="wf-id"><img src="${app.icon}" alt=""><b>${esc(app.name)}</b><em class="demo-pill" title="${esc(app.demo)}">Demo</em><span>${esc(app.tag)}</span></div>
     <button class="wf-btn" data-act="info" type="button">${I.info}<span>Info</span></button>
     ${pub ? `<a class="wf-btn" href="https://github.com/${OWNER}/${app.repo}" target="_blank" rel="noopener">${I.code}<span>Quellcode</span></a>` : ""}
     <a class="wf-btn primary" data-act="dl" href="${app.fallback.url}" target="_blank" rel="noopener">${I.download}<span>Installer <small>v${app.fallback.version}</small></span></a>`;

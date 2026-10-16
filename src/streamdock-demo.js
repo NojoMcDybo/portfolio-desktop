@@ -5,12 +5,12 @@
 import { I } from "./icons.js";
 
 const SNAP = 20, BREAK = 30, CHAT_W = 340;
+const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const NAMES = ["lumi", "kaito_77", "fuchsbau", "NullEins", "mira.k", "TobiB", "sunnyside", "pixelhans", "ElsaF", "d4rkm0de", "Rosi", "quokka"];
 const LINES = ["das war sauber 👏", "wie lange läuft der Stream schon?", "GG", "hallo aus Münster!", "kann man das nachbauen?", "lag?", "👀", "nächste Runde bitte", "mega Spielzug", "Chat ist heute ruhig", "wo gibt's die Einstellungen?", "KEKW", "ich bin wegen des Titels hier", "Klasse Bildqualität"];
 
-export function initStreamdock(wm, { h }) {
+export function initStreamdock(wm) {
   let docked = null;
-  let ch = null;
   let timer = 0;
 
   wm.on("bus", (name, data) => { if (name === "streamdock:start") start(data); });
@@ -18,7 +18,6 @@ export function initStreamdock(wm, { h }) {
   function stop() { clearInterval(timer); docked = null; }
 
   function start(s) {
-    ch = s;
     const existing = wm.get("sd-player");
     if (existing) { // Stream wechseln: Fenster bleiben, Inhalt wechselt
       existing.title = s.name;
@@ -96,7 +95,7 @@ export function initStreamdock(wm, { h }) {
       <div class="sd-pill" data-drag>
         <div class="sd-pill-in n-glass n-liquid panel">
           <button data-a="back" title="Zurück zur Auswahl" aria-label="Zurück zur Auswahl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button>
-          <span class="sd-t" data-drag>Streamdock · <b data-ch>${s.name}</b></span>
+          <span class="sd-t" data-drag>Streamdock · <b data-ch>${esc(s.name)}</b></span>
           <button data-a="pin" title="Immer im Vordergrund" aria-label="Immer im Vordergrund"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m15 4 5 5-3 1-3.5 3.5.5 4-1.5 1.5-3.5-3.5L5 20l-1-1 4.5-4.5L5 11l1.5-1.5 4 .5L14 6.5z"/></svg></button>
           <button data-a="full" title="Vollbild" aria-label="Vollbild">${I.max}</button>
           <button data-a="min" title="Minimieren" aria-label="Minimieren">${I.min}</button>
@@ -144,8 +143,8 @@ export function initStreamdock(wm, { h }) {
       <i style="width:60%;height:70%;left:-8%;top:-14%;background:hsl(${hues[0]} 80% 50%);animation:sd1 14s ease-in-out infinite alternate"></i>
       <i style="width:55%;height:60%;right:-8%;bottom:-18%;background:hsl(${hues[1]} 80% 48%);animation:sd2 17s ease-in-out infinite alternate"></i>
       <i style="width:35%;height:40%;left:36%;top:30%;background:hsl(${(hues[0] + 120) % 360} 70% 45%);opacity:.45;animation:sd1 11s ease-in-out infinite alternate-reverse"></i>
-      <div class="sd-big">${s.name}</div>
-      <div class="sd-live"><em>LIVE</em><div>${s.title || s.game}<small>${s.name} · ${Number(s.viewers).toLocaleString("de")} Zuschauer · Demo-Bild, kein echtes Video</small></div></div>
+      <div class="sd-big">${esc(s.name)}</div>
+      <div class="sd-live"><em>LIVE</em><div>${esc(s.title || s.game)}<small>${esc(s.name)} · ${Number(s.viewers).toLocaleString("de")} Zuschauer · Demo-Bild, kein echtes Video</small></div></div>
       <style>@keyframes sd1{to{transform:translate3d(18%,12%,0) scale(1.15)}}@keyframes sd2{to{transform:translate3d(-16%,-14%,0) scale(.9)}}</style>`;
   }
 
@@ -153,7 +152,7 @@ export function initStreamdock(wm, { h }) {
   function buildChat(b, w, s) {
     b.style.background = "#18181b";
     b.innerHTML = `
-      <div class="sd-ch-top" data-drag><b>Stream-Chat</b><span data-ch>${s.name}</span><div class="sd-ch-x"><button data-a="x" aria-label="Schließen">${I.close}</button></div></div>
+      <div class="sd-ch-top" data-drag><b>Stream-Chat</b><span data-ch>${esc(s.name)}</span><div class="sd-ch-x"><button data-a="x" aria-label="Schließen">${I.close}</button></div></div>
       <div class="sd-msgs" data-msgs></div>
       <form class="sd-in" autocomplete="off"><input placeholder="Nachricht senden" aria-label="Nachricht senden" maxlength="200"><button type="submit">Chatten</button></form>
       <style>

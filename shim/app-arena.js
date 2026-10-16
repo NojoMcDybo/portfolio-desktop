@@ -205,7 +205,7 @@
       if (key) setTimeout(() => P.emit("sport-plays", { key, reset: true, plays: String(key).startsWith("basketball") ? shots(60) : plays() }), 200);
       return null;
     },
-    league_pool: async ({ team } = {}) => { await new Promise((r) => setTimeout(r, 500)); return { league: "Nordliga", players: SOC.flatMap(([k]) => statsOf(k).map((s) => ({ ...s, team: T(k) }))) }; },
+    league_pool: async () => { await new Promise((r) => setTimeout(r, 500)); return { league: "Nordliga", players: SOC.flatMap(([k]) => statsOf(k).map((s) => ({ ...s, team: T(k) }))) }; },
     squad_stats: ({ key }) => statsOf(String(key).split(":")[1]),
     team_roster: ({ key }) => squads[String(key).split(":")[1]] ?? [],
     player_info: ({ id, name }) => {

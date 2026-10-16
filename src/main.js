@@ -212,7 +212,7 @@ function openFromApp(d, from) {
   if (d.max) wm.toggleMax(w);
 }
 notch.onChange(() => settingsReply(wm.get("notch")));
-initStreamdock(wm, { h });
+initStreamdock(wm);
 
 let toastT = 0;
 function toast(text) {

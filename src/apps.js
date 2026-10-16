@@ -141,7 +141,7 @@ export const LEARN = [
 ].map((s) => ({ ...s, url: `https://nojomcdybo.github.io/${s.id}/`, repo: s.id, size: [1100, 780] }));
 
 export const MORE = [
-  { id: "fogylation", name: "nebel.", sub: "Diabetes-Alltagssimulator für Angehörige", hue: 215, note: "Bildungsprojekt, kein Medizinprodukt." },
+  { id: "fogylation", name: "nebel.", sub: "Diabetes-Alltagssimulator für Angehörige · Bildungsprojekt, kein Medizinprodukt", hue: 215 },
   { id: "gedichte-galaxie", name: "Gedichte-Galaxie", sub: "321 Gedichte als begehbare Galaxie", hue: 285 },
   { id: "courtflow", name: "CourtFlow", sub: "Übungsbibliothek Jugendbasketball U8–U18", hue: 35 },
   { id: "Hooptrack", name: "HoopTrack", sub: "Basketball-Tracking im Browser", hue: 12 },
