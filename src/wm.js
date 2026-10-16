@@ -2,6 +2,7 @@
 // Programmfenster (mode "app") sind rahmenlos wie die echten Tauri-Fenster: Ziehen, Minimieren und Schließen kommen aus dem
 // Programm selbst (shim/tauri-shim.js leitet sie per postMessage an hier weiter). Lernseiten (mode "bar") bekommen eine Leiste.
 import { I } from "./icons.js";
+import { animate, SPRING, POP } from "./motion.js";
 
 const MENUBAR = 30;
 const DOCK_GAP = 104; // so viel Platz unten lassen (Dock + Rand)
@@ -37,7 +38,7 @@ export class WM {
     const ex = this.wins.get(spec.key);
     if (ex) { ex.min ? this.restore(ex) : this.focus(ex); return ex; }
 
-    const el = h("section", "win opening");
+    const el = h("section", "win");
     el.setAttribute("role", "dialog");
     el.setAttribute("aria-label", spec.title);
     el.style.setProperty("--bg", spec.bg || "var(--n-bg)");
@@ -103,8 +104,13 @@ export class WM {
     this.wins.set(spec.key, win);
     this.layer.append(el);
     this.#apply(win);
-    el.addEventListener("animationend", () => el.classList.remove("opening"), { once: true });
     this.focus(win);
+    // Öffnen: wächst aus dem Dock-Symbol (gibt es keins, hebt es sich leicht von unten)
+    const t = this.dockRect(spec.key);
+    win.opening = true;
+    if (t && !isSmall()) el.style.transformOrigin = `${t.x + t.width / 2 - win.x}px ${t.y + t.height / 2 - win.y}px`;
+    animate(el, { opacity: [0, 1], scale: [t && !isSmall() ? 0.2 : 0.92, 1], y: t && !isSmall() ? 0 : [24, 0] }, t && !isSmall() ? { type: "spring", stiffness: 230, damping: 25, mass: 0.9 } : SPRING)
+      .then(() => { win.opening = false; el.style.transformOrigin = ""; });
     this.#emit("change");
     return win;
   }
@@ -128,8 +134,11 @@ export class WM {
 
   focus(w) {
     if (this.front === w && !w.min) return;
+    const was = this.front;
     this.front = w;
     w.el.style.zIndex = ++this.z;
+    // ein kleiner Federstoß, wenn ein anderes Fenster nach vorn kommt
+    if (was && was !== w && !w.opening && !w.min && !w.anim) animate(w.el, { scale: [1.008, 1] }, POP);
     for (const o of this.wins.values()) {
       const on = o === w;
       o.el.classList.toggle("focused", on);
@@ -153,16 +162,21 @@ export class WM {
 
   #maxRect() { const a = this.area(); return { x: 0, y: a.y, w: a.w, h: a.h + 16 }; }
 
-  #anim(w) { w.el.style.transition = "translate .38s var(--n-ease), width .38s var(--n-ease), height .38s var(--n-ease)"; setTimeout(() => (w.el.style.transition = ""), 420); }
-
   toggleMax(w) {
-    this.#anim(w);
-    if (w.max) { Object.assign(w, w.prev); w.max = false; w.prev = null; }
-    else { w.prev = { x: w.x, y: w.y, w: w.w, h: w.h }; Object.assign(w, this.#maxRect()); w.max = true; }
+    const from = { x: w.x, y: w.y, w: w.w, h: w.h };
+    let to;
+    if (w.max) { to = w.prev; w.max = false; w.prev = null; }
+    else { w.prev = from; to = this.#maxRect(); w.max = true; }
     w.el.classList.toggle("max", w.max);
     const z = w.el.querySelector(".wc .z");
     if (z) z.innerHTML = w.max ? I.restore : I.max;
-    this.#apply(w);
+    w.rectAnim?.stop();
+    // Position und Größe wandern gemeinsam auf einer Feder (kein CSS-transition auf width/height nötig)
+    w.rectAnim = animate(0, 1, {
+      type: "spring", stiffness: 240, damping: 28, mass: 0.9,
+      onUpdate: (t) => { for (const k of ["x", "y", "w", "h"]) w[k] = from[k] + (to[k] - from[k]) * t; this.#apply(w); },
+      onComplete: () => { Object.assign(w, to); this.#apply(w); },
+    });
   }
 
   minimize(w) {
@@ -171,8 +185,10 @@ export class WM {
     const t = this.dockRect(w.key);
     const dx = t ? t.x + t.width / 2 - (w.x + w.w / 2) : 0;
     const dy = t ? t.y + t.height / 2 - (w.y + w.h / 2) : 200;
-    const anim = w.el.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${dx}px,${dy}px) scale(.08)`, opacity: 0 }], { duration: 420, easing: "cubic-bezier(.5,0,.75,.4)" });
-    anim.onfinish = () => { if (!w.min) return; w.el.hidden = true; w.el.style.display = "none"; };
+    w.anim?.stop();
+    w.el.style.transformOrigin = "50% 50%";
+    w.anim = animate(w.el, { x: dx, y: dy, scale: 0.08, opacity: 0 }, { duration: 0.42, ease: [0.5, 0, 0.75, 0.4] });
+    w.anim.then(() => { if (w.min) { w.el.hidden = true; w.el.style.display = "none"; } w.anim = null; });
     if (this.front === w) { this.front = null; this.#emit("focus", null); }
     this.#emit("change");
   }
@@ -184,7 +200,10 @@ export class WM {
     const t = this.dockRect(w.key);
     const dx = t ? t.x + t.width / 2 - (w.x + w.w / 2) : 0;
     const dy = t ? t.y + t.height / 2 - (w.y + w.h / 2) : 200;
-    w.el.animate([{ transform: `translate(${dx}px,${dy}px) scale(.08)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 520, easing: "cubic-bezier(.22,1.1,.36,1)" });
+    w.anim?.stop();
+    w.el.style.transformOrigin = "50% 50%";
+    w.anim = animate(w.el, { x: [dx, 0], y: [dy, 0], scale: [0.08, 1], opacity: [0, 1] }, { type: "spring", stiffness: 230, damping: 24, mass: 0.9 });
+    w.anim.then(() => { w.anim = null; w.el.style.transformOrigin = ""; });
     this.focus(w);
     this.#emit("change");
   }
@@ -194,8 +213,9 @@ export class WM {
     this.wins.delete(w.key);
     w.spec.cleanup?.(w);
     w.spec.onClose?.(w);
-    const a = w.el.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.94)" }], { duration: 170, easing: "ease-in" });
-    a.onfinish = () => { if (w.frame) w.frame.src = "about:blank"; w.el.remove(); };
+    w.anim?.stop();
+    w.el.style.transformOrigin = "50% 60%";
+    animate(w.el, { opacity: 0, scale: 0.93 }, { duration: 0.17, ease: "easeIn" }).then(() => { if (w.frame) w.frame.src = "about:blank"; w.el.remove(); });
     if (this.front === w) { this.front = null; this.#emit("focus", null); }
     this.#emit("change");
   }

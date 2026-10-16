@@ -45,3 +45,4 @@ document.querySelector("main").addEventListener("click", (e) => {
 addEventListener("message", (e) => { if (e.origin === location.origin && e.data?.type === "notch-settings") { st = { ...st, ...e.data.settings }; paint(); } });
 bus("notch:get", {});
 paint();
+window.Motion?.animate(document.querySelectorAll("header, .lead, .box"), { opacity: [0, 1], y: [16, 0] }, { delay: window.Motion.stagger(0.07, { startDelay: 0.05 }), type: "spring", stiffness: 300, damping: 28 });

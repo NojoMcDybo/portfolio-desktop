@@ -324,8 +324,19 @@ function render(soft = false) {
   const view = S.tab === "pro" ? proView() : S.tab === "me" ? meView() : studioView();
   main.innerHTML = `<div class="view" id="view">${view}</div>`;
   drawing = false;
+  enter();
   if (S.tab === "pro") bindPro(); else if (S.tab === "me") bindMe(); else bindStudio();
   if (S.tab === "studio") paintStudio();
+}
+// Ansichtswechsel: Karten federn nacheinander ein, die Goldlinie zeichnet sich, Balken wachsen (Motion; im Live-Takt bleibt alles ruhig)
+function enter() {
+  const M = window.Motion;
+  if (!M) return;
+  M.animate(main.querySelectorAll(".serie, .row, .team, .panel, .clip, .mast button, .head, .rec, .back, .rank, .games"), { opacity: [0, 1], y: [14, 0] }, { delay: M.stagger(0.035, { startDelay: 0.04 }), type: "spring", stiffness: 320, damping: 28 });
+  const line = main.querySelector('#chart svg path[stroke="#fff"]');
+  if (line) M.animate(line, { pathLength: [0, 1] }, { duration: 0.9, ease: [0.22, 1, 0.36, 1] });
+  const bars = main.querySelectorAll(".bar i");
+  if (bars.length) M.animate(bars, { scaleX: [0, 1] }, { delay: M.stagger(0.04, { startDelay: 0.15 }), type: "spring", stiffness: 160, damping: 22 });
 }
 function paintPro() {
   const v = $("#view"); if (!v || S.open) return;

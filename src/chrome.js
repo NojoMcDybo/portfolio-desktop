@@ -3,6 +3,7 @@ import { APPS, LEARN, MORE, OWNER, byId } from "./apps.js";
 import { release, fmtMb } from "./downloads.js";
 import { I } from "./icons.js";
 import { h } from "./wm.js";
+import { animate, lift, reveal } from "./motion.js";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -27,7 +28,11 @@ export function appFooter(app, win) {
 
 function toggleSheet(win, app) {
   const ex = win.body.querySelector(".sheet");
-  if (ex) { ex.hidden = !ex.hidden; return; }
+  if (ex) {
+    ex.hidden = !ex.hidden;
+    if (!ex.hidden) { animate(ex, { opacity: [0, 1] }, { duration: 0.22 }); animate(ex.querySelector(".sheet-card"), { opacity: [0, 1], y: [22, 0], scale: [0.97, 1] }, { type: "spring", stiffness: 380, damping: 28 }); }
+    return;
+  }
   const pub = app.sourceRepo !== null;
   const s = h("div", "sheet");
   s.innerHTML = `
@@ -45,9 +50,12 @@ function toggleSheet(win, app) {
       </div>
       <div class="sheet-meta" data-meta>${esc(app.stack)} · nur Windows 10/11. Bei neuen Installern kann SmartScreen warnen („Weitere Informationen“ → „Trotzdem ausführen“).</div>
     </div>`;
-  s.addEventListener("click", (e) => { if (e.target === s || e.target.closest("[data-close]")) s.hidden = true; });
-  s.addEventListener("keydown", (e) => { if (e.key === "Escape") s.hidden = true; });
+  const hide = () => animate(s, { opacity: 0 }, { duration: 0.15 }).then(() => { s.hidden = true; });
+  s.addEventListener("click", (e) => { if (e.target === s || e.target.closest("[data-close]")) hide(); });
+  s.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
   win.body.append(s);
+  animate(s, { opacity: [0, 1] }, { duration: 0.22 });
+  animate(s.querySelector(".sheet-card"), { opacity: [0, 1], y: [22, 0], scale: [0.97, 1] }, { type: "spring", stiffness: 380, damping: 28 });
   release(app).then((r) => {
     s.querySelector("[data-dl]").href = r.url;
     s.querySelector("[data-dl] span").textContent = `Installer v${r.version} · ${fmtMb(r.mb)}`;
@@ -81,14 +89,15 @@ export function buildLearn(body, openSite) {
     </div>
     <style>
       .lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
-      .lcard{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:center;text-align:left;padding:14px;border-radius:16px;background:var(--n-surface);box-shadow:inset 0 0 0 1px var(--n-line);transition:background .2s,transform .35s var(--spring),box-shadow .2s}
-      .lcard:hover{background:var(--n-surface-2);transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--n-line-2),0 10px 24px rgba(0,0,0,.28)}
-      .lcard:active{transform:scale(.98)}
+      .lcard{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:center;text-align:left;padding:14px;border-radius:16px;background:var(--n-surface);box-shadow:inset 0 0 0 1px var(--n-line);transition:background .2s,box-shadow .2s}
+      .lcard:hover{background:var(--n-surface-2);box-shadow:inset 0 0 0 1px var(--n-line-2),0 10px 24px rgba(0,0,0,.28)}
       .lcard .lt{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font:800 19px var(--n-font-display);color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
       .lcard b{display:block;font-weight:650;margin-bottom:2px}
       .lcard span{color:var(--n-dim);font-size:12px;line-height:1.35;display:block}
       .lcard i{display:block;font-style:normal;color:var(--n-faint);font-size:11px;margin-top:3px}
     </style>`;
+  lift(body.querySelectorAll(".lcard"));
+  reveal(body.querySelectorAll(".lcard, .learn h2, .learn p"), { y: 14, gap: 0.04 });
   body.addEventListener("click", (e) => {
     const c = e.target.closest("[data-site]");
     if (!c) return;
@@ -120,15 +129,16 @@ export function buildWelcome(body, openApp, openLearn) {
       .w-hero h1{margin:0 0 12px;font:700 clamp(30px,5vw,44px)/1.05 var(--n-font-display);letter-spacing:-.02em}
       .w-lead{margin:0 0 26px;max-width:58ch;color:var(--n-dim);font-size:15px;line-height:1.6}
       .w-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-      .w-app{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:center;text-align:left;padding:14px;border-radius:18px;background:var(--n-surface);box-shadow:inset 0 0 0 1px var(--n-line);transition:background .2s,transform .35s var(--spring)}
-      .w-app:hover{background:var(--n-surface-2);transform:translateY(-2px)}
-      .w-app:active{transform:scale(.98)}
+      .w-app{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:center;text-align:left;padding:14px;border-radius:18px;background:var(--n-surface);box-shadow:inset 0 0 0 1px var(--n-line);transition:background .2s}
+      .w-app:hover{background:var(--n-surface-2)}
       .w-app img,.w-app .wl{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;color:#fff}
       .w-app .wl svg{width:26px;height:26px}
       .w-app b{display:block;font:650 14.5px var(--n-font)}
       .w-app span{color:var(--n-dim);font-size:12px;line-height:1.35}
       .w-note{margin:22px 0 0;color:var(--n-faint);font-size:12.5px}
     </style>`;
+  lift(body.querySelectorAll(".w-app"));
+  reveal(body.querySelectorAll(".w-eye, .w-hero h1, .w-lead, .w-app, .w-note"), { y: 18, gap: 0.05, start: 0.2 });
   body.addEventListener("click", (e) => {
     const a = e.target.closest("[data-app]");
     if (a) return openApp(byId(a.dataset.app));

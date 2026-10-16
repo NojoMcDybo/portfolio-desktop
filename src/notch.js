@@ -2,6 +2,7 @@
 // expanded), gleiche Maße und Federkurven, eine Rangliste bestimmt, was die kleine Notch zeigt. Werte sind Beispieldaten.
 // Neue Werte ändern nur ihre Zahl – nichts wird neu gebaut, damit nichts blinkt.
 import { I } from "./icons.js";
+import { animate, EASE } from "./motion.js";
 
 const SIZE = { idle: { w: 190, h: 30, r: 10, e: 10 }, compact: { w: 320, h: 34, r: 13, e: 10 }, expanded: { w: 520, h: 0, r: 30, e: 22 } };
 export const SOURCES = [
@@ -43,6 +44,7 @@ export function createNotch(root) {
       </div>
     </div>`;
   const el = q(root, "#notch");
+  const shape = q(el, ".n-shape");
   const compact = q(el, ".n-compact");
   const xin = q(el, ".n-xin");
   let state = "idle", hover = false, pinned = false, dragOver = false, alertUntil = 0, alertData = null, leaveT = 0, alertT = 0, gone = true;
@@ -62,6 +64,8 @@ export function createNotch(root) {
   };
 
   let lastSig = "";
+  let sizeKey = "", sizeAnims = [], thumbPos = null, tabsKey = "";
+  // Größe, Rundung und Hohlkehlen laufen auf Federn von Motion: aufklappen mit leichtem Überschwingen, zuklappen ohne
   function setState(s) {
     state = s;
     el.dataset.state = s;
@@ -69,10 +73,17 @@ export function createNotch(root) {
     let w = z.w, hh = z.h;
     if (s === "compact") { w = active().length === 1 ? 230 : 320; hh = 34; }
     if (s === "expanded") hh = Math.ceil(xin.offsetHeight) || 190;
-    el.style.setProperty("--w", w + "px");
-    el.style.setProperty("--h", hh + "px");
-    el.style.setProperty("--r", z.r + "px");
-    el.style.setProperty("--e", z.e + "px");
+    w = Math.min(w, innerWidth - 24);
+    const key = [s, w, hh].join();
+    if (key === sizeKey) return;
+    sizeKey = key;
+    sizeAnims.forEach((a) => a.stop());
+    const spr = s === "expanded" ? { type: "spring", stiffness: 300, damping: 21, mass: 0.9 } : { type: "spring", stiffness: 380, damping: 31, mass: 0.9 };
+    sizeAnims = [
+      animate(el, { width: w + "px", height: hh + "px" }, spr),
+      animate(shape, { borderBottomLeftRadius: z.r + "px", borderBottomRightRadius: z.r + "px" }, spr),
+      animate(el, { "--e": z.e + "px" }, spr),
+    ];
   }
   function refresh() {
     const next = want();
@@ -100,7 +111,7 @@ export function createNotch(root) {
     compact.innerHTML = ids.length === 1
       ? `<span></span><span class="in">${chip(ids[0])}</span><span></span>`
       : `<span class="in">${ids[0] ? chip(ids[0]) : ""}</span><span class="in">${ids[1] ? chip(ids[1]) : ""}</span>`;
-    compact.querySelectorAll(".in").forEach((n) => (n.style.animation = "card-swap .42s var(--n-ease) both"));
+    animate(compact.querySelectorAll(".in"), { opacity: [0, 1], scale: [0.82, 1], filter: ["blur(3px)", "blur(0px)"] }, { type: "spring", stiffness: 420, damping: 26 });
     paintCompact();
   }
   function paintCompact() {
@@ -133,6 +144,7 @@ export function createNotch(root) {
       xSig = sig;
       xin.innerHTML = `<div class="n-alertbox"><div style="font:650 17px var(--n-font)">${alertData.title}</div><div class="n-sub">${alertData.text}</div></div>`;
       xin.style.padding = "18px 22px 20px";
+      animate(xin.querySelector(".n-alertbox"), { opacity: [0, 1], y: [-8, 0], filter: ["blur(4px)", "blur(0px)"] }, { duration: 0.4, ease: EASE });
       return;
     }
     xin.style.padding = "";
@@ -142,9 +154,17 @@ export function createNotch(root) {
     if (sig === xSig) return;
     xSig = sig;
     xin.innerHTML = `
-      <div class="n-tabs" role="tablist">${tabs.map(([id, n]) => `<button role="tab" data-tab="${id}" aria-selected="${id === d.tab}">${n}</button>`).join("")}</div>
+      <div class="n-tabs" role="tablist"><i class="n-tabthumb"></i>${tabs.map(([id, n]) => `<button role="tab" data-tab="${id}" aria-selected="${id === d.tab}">${n}</button>`).join("")}</div>
       <div class="n-card on" data-card="${d.tab}">${card(d.tab)}</div>`;
     paintExpanded();
+    // Karte blendet scharf ein, die Tab-Perle gleitet unter den gewählten Reiter
+    animate(xin.querySelector(".n-card"), { opacity: [0, 1], y: [8, 0], filter: ["blur(4px)", "blur(0px)"] }, { duration: 0.38, ease: EASE });
+    const sel = xin.querySelector('[aria-selected="true"]'), th = xin.querySelector(".n-tabthumb");
+    const key = tabs.map((t) => t[0]).join();
+    th.style.width = sel.offsetWidth + "px";
+    if (thumbPos != null && key === tabsKey) animate(th, { x: [thumbPos, sel.offsetLeft] }, { type: "spring", stiffness: 420, damping: 30 });
+    else th.style.transform = `translateX(${sel.offsetLeft}px)`;
+    thumbPos = sel.offsetLeft; tabsKey = key;
   }
   function card(id) {
     switch (id) {
@@ -300,7 +320,7 @@ export function createNotch(root) {
     /** Notch fährt aus der Bildschirmkante, wenn der Desktop aufgebaut ist */
     show() {
       el.classList.remove("gone");
-      el.animate([{ transform: "translate(-50%,-110%)" }, { transform: "translate(-50%,0)" }], { duration: 900, easing: "cubic-bezier(.22,1.18,.36,1)" });
+      animate(el, { y: [-44, 0] }, { type: "spring", stiffness: 170, damping: 15, mass: 1 });
       gone = false;
       void gone;
     },

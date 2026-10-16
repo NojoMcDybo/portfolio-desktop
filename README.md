@@ -6,11 +6,12 @@ Jedes Programm läuft im Fenster mit Beispieldaten und lässt sich ausprobieren.
 
 ## Wie es gebaut ist
 
-Kein Framework, keine Laufzeit-Abhängigkeiten: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-Module). Die Gestaltung stammt aus meiner Designsprache *Nojo UI* (`src/nojo-ui.css`).
+Kein Framework: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-Module). Einzige Bibliothek ist **Motion** ([motion.dev](https://motion.dev), MIT, Version 13.5.0 fest in `vendor/`): Federn, Staffelung und Gesten für Intro, Fenster, Dock, Menüs, Notch und Karten. „Bewegung reduzieren“ im System schaltet alles auf sofort. Die Gestaltung stammt aus meiner Designsprache *Nojo UI* (`src/nojo-ui.css`).
 
 | Ordner | Inhalt |
 |---|---|
 | `index.html`, `src/` | Intro (`fold.js`), Fensterverwaltung (`wm.js`), Dock und Menüleiste (`main.js`), Notch (`notch.js`), Fußzeile und Info-Blatt mit Installer (`chrome.js`, `downloads.js`) |
+| `src/motion.js`, `vendor/` | Motion (gepinnt, mit Lizenz) und die gemeinsamen Federn `SPRING`, `POP`, `SOFT` sowie `lift()` und `reveal()` |
 | `apps/` | die Programme im Fenster (siehe unten) |
 | `shim/` | Tauri-Attrappe (`tauri-shim.js`) und je Programm die Beispiel-Antworten (`app-*.js`) |
 | `tools/` | `build-apps.mjs` baut die Oberflächen aus den Programm-Repos, `serve.py` ist ein Entwicklungs-Server ohne Cache |

@@ -6,6 +6,7 @@ import { appFooter, siteFooter, buildLearn, buildWelcome } from "./chrome.js";
 import { createNotch } from "./notch.js";
 import { initStreamdock } from "./streamdock-demo.js";
 import { I } from "./icons.js";
+import { animate, stagger, springValue, lift, POP, SPRING } from "./motion.js";
 
 const $ = (s) => document.querySelector(s);
 const REPO = "https://github.com/NojoMcDybo/portfolio-desktop";
@@ -51,7 +52,7 @@ for (const d of DOCK) {
   b.innerHTML = `<img src="${d.icon}" alt="" draggable="false"><span class="dk-label">${d.name}</span>`;
   b.addEventListener("click", () => {
     const w = wm.get(d.key);
-    if (!w) { b.classList.remove("bounce"); void b.offsetWidth; b.classList.add("bounce"); }
+    if (!w) animate(b.querySelector("img"), { y: [0, -26, 0, -13, 0] }, { duration: 0.85, ease: "easeOut", times: [0, 0.32, 0.58, 0.8, 1] });
     // Lernseiten-Ordner: ist ein Seitenfenster offen, bringt der Klick es nach vorn, sonst die Übersicht
     if (d.key === "learn" && !wm.get("learn")) {
       const sites = wm.all().filter((x) => x.key.startsWith("site:"));
@@ -67,6 +68,21 @@ for (const d of DOCK) {
     if (w) m.push({ sep: true }, { label: "Schließen", fn: () => wm.close(w) });
     menu(e.clientX, innerHeight - 90, m, true);
   });
+  // Beschriftung federt herein; Druck drückt das Symbol (nicht das Dock-Element selbst: das trägt die Vergrößerung)
+  const lab = b.querySelector(".dk-label"), img = b.querySelector("img");
+  const showLab = () => animate(lab, { opacity: [0, 1], y: [8, 0] }, { type: "spring", stiffness: 520, damping: 30 });
+  const hideLab = () => animate(lab, { opacity: 0, y: 4 }, { duration: 0.12 });
+  b.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") showLab(); });
+  b.addEventListener("pointerleave", () => hideLab());
+  b.addEventListener("focus", () => { if (b.matches(":focus-visible")) showLab(); });
+  b.addEventListener("blur", () => hideLab());
+  b.addEventListener("pointerdown", () => animate(img, { scale: 0.88 }, POP));
+  for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => animate(img, { scale: 1 }, POP));
+  // Vergrößerung: jedes Symbol folgt seinem Zielwert auf einer Feder (Größe und seitlicher Versatz, das Dock bleibt mittig)
+  const sv = { s: springValue(1, { stiffness: 520, damping: 30, mass: 0.7 }), o: springValue(0, { stiffness: 520, damping: 30, mass: 0.7 }) };
+  const paint = () => { b.style.transform = `translateX(${sv.o.get()}px) scale(${sv.s.get()})`; };
+  sv.s.on("change", paint); sv.o.on("change", paint);
+  b._sv = sv;
   items.set(d.key, b);
   bar.append(b);
 }
@@ -78,27 +94,22 @@ function paintDock() {
 wm.on("change", () => { paintDock(); });
 wm.on("focus", (w) => { $("#mb-app").textContent = w ? w.title : "Desktop"; });
 
-// Vergrößerung beim Drüberfahren (Nähe zur Maus), Nachbarn rücken mit, das Dock bleibt mittig
+// Vergrößerung beim Drüberfahren (Nähe zur Maus), Nachbarn rücken mit
 const fine = matchMedia("(hover: hover) and (pointer: fine)");
-let magRaf = 0;
 bar.addEventListener("pointermove", (e) => {
-  if (!fine.matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  cancelAnimationFrame(magRaf);
-  magRaf = requestAnimationFrame(() => {
-    const list = [...items.values()];
-    const w0 = 56 + 8;
-    const sc = list.map((b) => { const r = b.getBoundingClientRect(); const dist = Math.abs(e.clientX - (r.left + r.width / 2) + (b._off || 0)); return 1 + 0.62 * Math.max(0, 1 - dist / 130) ** 2; });
-    const total = sc.reduce((a, s) => a + (s - 1) * w0, 0);
-    let acc = 0;
-    list.forEach((b, i) => {
-      const off = acc + ((sc[i] - 1) * w0) / 2 - total / 2;
-      acc += (sc[i] - 1) * w0;
-      b._off = off;
-      b.style.transform = `translateX(${off.toFixed(1)}px) scale(${sc[i].toFixed(3)})`;
-    });
+  if (!fine.matches) return;
+  const list = [...items.values()];
+  const w0 = 56 + 8;
+  const sc = list.map((b) => { const r = b.getBoundingClientRect(); const dist = Math.abs(e.clientX - (r.left + r.width / 2) + b._sv.o.get()); return 1 + 0.62 * Math.max(0, 1 - dist / 130) ** 2; });
+  const total = sc.reduce((a, s) => a + (s - 1) * w0, 0);
+  let acc = 0;
+  list.forEach((b, i) => {
+    b._sv.o.set(acc + ((sc[i] - 1) * w0) / 2 - total / 2);
+    acc += (sc[i] - 1) * w0;
+    b._sv.s.set(sc[i]);
   });
 });
-bar.addEventListener("pointerleave", () => { cancelAnimationFrame(magRaf); items.forEach((b) => { b._off = 0; b.style.transform = ""; }); });
+bar.addEventListener("pointerleave", () => items.forEach((b) => { b._sv.s.set(1); b._sv.o.set(0); }));
 
 // ---------- Desktop-Symbole ----------
 const ICONS = [
@@ -115,6 +126,7 @@ for (const i of ICONS) {
   b.addEventListener("click", i.open);
   icons.append(b);
 }
+lift(icons.querySelectorAll(".dicon"), { y: 0, scale: 1.04, target: ".di" });
 
 // ---------- Menüleiste ----------
 const menuEl = $("#menu");
@@ -139,6 +151,8 @@ function menu(x, y, list, above = false) {
   menuEl.style.top = (above ? Math.max(40, y - hgt) : y) + "px";
   menuEl.style.transformOrigin = above ? "bottom left" : "top left";
   menuEl.querySelector("button:not(.dis), a")?.focus({ preventScroll: true });
+  animate(menuEl, { opacity: [0, 1], scale: [0.94, 1] }, { type: "spring", stiffness: 520, damping: 32 });
+  animate(menuEl.children, { opacity: [0, 1], x: [-8, 0] }, { delay: stagger(0.018, { startDelay: 0.04 }), duration: 0.28, ease: "easeOut" });
 }
 function closeMenu() { menuEl.hidden = true; document.querySelectorAll("[aria-expanded=true]").forEach((b) => b.setAttribute("aria-expanded", "false")); menuFor = null; }
 addEventListener("pointerdown", (e) => { if (!menuEl.hidden && !menuEl.contains(e.target) && !e.target.closest("[aria-haspopup]")) closeMenu(); }, true);
@@ -214,20 +228,30 @@ function openFromApp(d, from) {
 notch.onChange(() => settingsReply(wm.get("notch")));
 initStreamdock(wm);
 
-let toastT = 0;
+let toastT = 0, toastA = null;
 function toast(text) {
   const t = $("#toast");
-  t.textContent = text; t.classList.add("on");
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2800);
+  t.textContent = text;
+  toastA?.stop();
+  toastA = animate(t, { opacity: [0, 1], y: [16, 0] }, SPRING);
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { toastA = animate(t, { opacity: 0, y: 8 }, { duration: 0.25 }); }, 2800);
 }
 
 // ---------- Start ----------
+// Aufbau des Desktops nach dem Hineinzoomen: Menüleiste fährt herunter, Dock hebt sich, die Symbole springen nacheinander ein
+function bootReveal() {
+  animate("#menubar", { y: ["-100%", 0], opacity: [0, 1] }, { type: "spring", stiffness: 210, damping: 24 });
+  animate(".dock-bar", { y: [90, 0], opacity: [0, 1] }, { type: "spring", stiffness: 190, damping: 22 });
+  animate(".dk img", { scale: [0.3, 1], opacity: [0, 1] }, { delay: stagger(0.05, { startDelay: 0.18 }), type: "spring", stiffness: 420, damping: 20 });
+  animate("#icons .dicon", { opacity: [0, 1], x: [-20, 0] }, { delay: stagger(0.07, { startDelay: 0.35 }), type: "spring", stiffness: 300, damping: 26 });
+}
 const skip = /[?&#]skip\b/.test(location.search + location.hash);
 document.body.classList.add("booting");
 // zum Testen: ?open=arena öffnet ein Programm sofort
 const params = new URLSearchParams(location.search);
 if (params.has("debug")) window.__wm = wm; // nur zum Testen im Browser
-runIntro({ skip }).then(() => {
+runIntro({ skip, onReveal: bootReveal }).then(() => {
   setTimeout(() => notch.show(), 250);
   setTimeout(() => {
     const first = params.get("open");

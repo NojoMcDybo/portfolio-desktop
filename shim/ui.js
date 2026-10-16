@@ -22,12 +22,18 @@ export function segments(root, onPick) {
   const thumb = document.createElement("i");
   thumb.className = "n-seg-thumb";
   root.prepend(thumb);
-  const place = (animate) => {
+  const M = window.Motion;
+  const place = (animateIt) => {
     const b = root.querySelector("button.active");
     if (!b) return;
-    if (animate) { thumb.classList.add("moving"); setTimeout(() => thumb.classList.remove("moving"), 420); }
-    thumb.style.left = b.offsetLeft + "px";
+    // Perle gleitet auf einer Feder und wird dabei flacher wie ein Tropfen (Motion); ohne Motion springt sie
+    thumb.style.transition = "none";
+    thumb.style.left = "0";
     thumb.style.width = b.offsetWidth + "px";
+    if (animateIt && M) {
+      M.animate(thumb, { x: b.offsetLeft }, { type: "spring", stiffness: 430, damping: 30 });
+      M.animate(thumb, { scaleY: [1, 0.78, 1], scaleX: [1, 1.05, 1] }, { duration: 0.38, ease: "easeInOut" });
+    } else thumb.style.transform = `translateX(${b.offsetLeft}px)`;
   };
   root.addEventListener("click", (e) => {
     const b = e.target.closest("button");
