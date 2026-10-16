@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <script src="../../shim/tauri-shim.js"></script>
+    <script src="../../shim/app-arena.js"></script>
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arena</title>
+    <script type="module" crossorigin src="./assets/index-Cpk3a-M4.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BQp4xh4J.css">
+  </head>
+  <body class="n-window">
+    <!-- rahmenloses Fenster: Kopf zum Ziehen (Raster: Marke | Reiter | Werkzeuge); Reiter, Abgleich und Knoepfe
+         schweben als Liquid Glass ueber dem Inhalt. Fensterknoepfe als Glaspille (main.ts), im Vollbild ausgeblendet. -->
+    <header class="top" data-tauri-drag-region>
+      <div class="brand" data-tauri-drag-region>Arena</div>
+      <nav class="tabs n-seg n-liquid panel" role="tablist" aria-label="Ansicht">
+        <button role="tab" data-view="live">Live</button>
+        <button role="tab" data-view="plan">Spielplan</button>
+        <button role="tab" data-view="leagues">Ligen</button>
+        <button role="tab" data-view="teams">Teams</button>
+      </nav>
+      <div class="top-right" data-tauri-drag-region>
+        <button class="n-ico sm n-glass n-liquid find-btn" title="Suchen (Strg+K)" aria-label="Suchen"></button>
+        <span class="sync n-glass n-liquid" role="status"><i class="dot"></i><span class="sync-t">Notch</span></span>
+        <button class="n-ico sm n-glass n-liquid gear" title="Einstellungen" aria-label="Einstellungen"></button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Live: Spiele von heute (Fenster: Leiste oben, breit: Spalte links), daneben das gewaehlte gross
+           mit Spielfeld, Ticker und Analyse -->
+      <section class="view" data-view="live">
+        <div class="strip" aria-label="Spiele heute"></div>
+        <div class="focus"></div>
+      </section>
+
+      <!-- Spielplan: Tage untereinander, je Tag die Wettbewerbe nebeneinander -->
+      <section class="view" data-view="plan" hidden>
+        <div class="filters">
+          <div class="n-seg plan-scope" role="group" aria-label="Spiele">
+            <button data-scope="all">Alle</button>
+            <button data-scope="fav">Meine Teams</button>
+          </div>
+          <div class="chips plan-sports"></div>
+          <div class="chips plan-leagues"></div>
+        </div>
+        <div class="plan"></div>
+      </section>
+
+      <!-- Ligen: je Sportart und Wettbewerb Tabelle, Spielplan und Schlagzeilen nebeneinander -->
+      <section class="view" data-view="leagues" hidden>
+        <div class="filters">
+          <div class="n-seg league-sports" role="group" aria-label="Sportart"></div>
+          <div class="chips league-chips"></div>
+        </div>
+        <div class="league-grid">
+          <div class="lg-table"></div>
+          <div class="lg-plan"></div>
+          <div class="lg-news"></div>
+        </div>
+      </section>
+
+      <!-- Teams: naechstes Spiel und Form deiner Teams -->
+      <!-- Teams: links die Auswahl (deine Teams, alle Teams der Wettbewerbe, Suche), rechts Team- bzw. Spielerkarte -->
+      <section class="view" data-view="teams" hidden>
+        <div class="teams-layout">
+          <aside class="teams-side n-card">
+            <input class="team-search" type="search" placeholder="Team suchen" aria-label="Team suchen" />
+            <div class="ts-list"></div>
+          </aside>
+          <div class="teams-main"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Seitenblatt (Einstellungen, Team) -->
+    <div class="backdrop" hidden>
+      <aside class="sheet n-liquid panel" data-refract="10" role="dialog" aria-modal="true">
+        <div class="sheet-head">
+          <h2 class="sheet-title"></h2>
+          <button class="n-ico sm sheet-x" title="Schließen (Esc)" aria-label="Schließen"></button>
+        </div>
+        <div class="sheet-body"></div>
+      </aside>
+    </div>
+    <!-- Schnellsuche (Strg+K): Teams, Ligen, Ansichten, Aktionen -->
+    <div class="palette-wrap" hidden>
+      <div class="palette n-liquid panel" role="dialog" aria-modal="true" aria-label="Schnellsuche">
+        <input class="pal-input n-input" type="search" placeholder="Team, Liga oder Ansicht …" spellcheck="false" autocomplete="off" />
+        <ol class="pal-list" role="listbox"></ol>
+        <p class="pal-hint">↑ ↓ wählen · Enter öffnen · Esc schließen</p>
+      </div>
+    </div>
+    <!-- Spielplan und Ligen: zurueck zum aktuellen Spieltag -->
+    <button class="today-btn n-glass n-liquid" hidden title="Zum aktuellen Spieltag (H)">Heute</button>
+    <div class="sr" aria-live="polite"></div>
+  </body>
+</html>

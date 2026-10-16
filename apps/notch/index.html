@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notch – Einstellungen</title>
+  <link rel="stylesheet" href="../../src/nojo-ui.css">
+  <link rel="stylesheet" href="notch.css">
+  <script src="../../shim/tauri-shim.js"></script>
+  <script type="module" src="notch.js"></script>
+</head>
+<body class="n-window">
+  <div class="n-dragbar" data-tauri-drag-region></div>
+  <main>
+    <header data-tauri-drag-region>
+      <div data-tauri-drag-region>
+        <div class="n-eyebrow" data-tauri-drag-region>Notch · Einstellungen</div>
+        <h1 class="n-display" data-tauri-drag-region>Was zeigt die kleine Notch?</h1>
+      </div>
+    </header>
+    <p class="lead">Die echte Notch ist eine schwarze Form an der oberen Bildschirmkante von Windows. Der Nachbau oben auf diesem Desktop reagiert auf alles, was du hier einstellst.</p>
+
+    <section class="n-card box">
+      <div class="n-eyebrow">Rangliste</div>
+      <p class="sub">Zugeklappt zeigt die Notch die beiden obersten Quellen, die gerade etwas haben. Ganz oben steht, was Vorrang hat.</p>
+      <ul id="src" class="src"></ul>
+    </section>
+
+    <div class="grid">
+      <section class="n-card box">
+        <div class="n-eyebrow">Gerade zu sehen</div>
+        <div class="preview"><div class="pill" id="pill"></div></div>
+        <p class="sub" id="why"></p>
+      </section>
+      <section class="n-card box">
+        <div class="n-eyebrow">Ausprobieren</div>
+        <p class="sub">Aufklappen tut sie mit der Maus, mit einer Datei darüber oder bei einem Alarm.</p>
+        <div class="btns">
+          <button class="n-btn" data-test="alert">Alarm senden</button>
+          <button class="n-btn" data-test="goal">Tor-Alarm</button>
+          <button class="n-btn" data-test="timer">Timer 1 Min.</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="n-card box">
+      <div class="n-eyebrow">Bei Vollbild-Programmen</div>
+      <p class="sub">Verhalten auf dem Hauptmonitor. Auf diesem Desktop gibt es keine Vollbild-Programme, die Wahl wird nur gemerkt.</p>
+      <div class="n-seg" id="fs">
+        <button data-v="hide">Ausblenden</button><button data-v="edge">Am Rand</button><button data-v="show">Nur anzeigen</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

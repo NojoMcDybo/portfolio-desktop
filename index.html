@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nojo – Desktop-Portfolio</title>
+  <meta name="description" content="Mein Desktop: Arena, Vantage, Notch, Haze, Streamdock, Kursbuch und meine Lernseiten – alles selbst gebaut, im Browser ausprobierbar, mit Installer zum Download.">
+  <meta name="theme-color" content="#0b0b0d">
+  <meta property="og:title" content="Nojo – Desktop-Portfolio">
+  <meta property="og:description" content="Eigene Programme und Lernseiten, direkt im Browser ausprobieren.">
+  <link rel="icon" href="assets/icons/notch.png">
+  <link rel="stylesheet" href="src/nojo-ui.css">
+  <link rel="stylesheet" href="src/shell.css">
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <!-- Desktop liegt unter dem Aufklapp-Intro und wird erst beim Hineinzoomen sichtbar -->
+  <div id="desktop" aria-hidden="true">
+    <div class="wallpaper" aria-hidden="true"><i></i><i></i><i></i></div>
+
+    <header id="menubar">
+      <div class="mb-left">
+        <button class="mb-item mb-logo" id="mb-logo" aria-label="Nojo-Menü" aria-haspopup="menu"><span>N</span></button>
+        <span class="mb-app" id="mb-app">Desktop</span>
+        <button class="mb-item" data-menu="fenster" aria-haspopup="menu">Fenster</button>
+        <button class="mb-item" data-menu="hilfe" aria-haspopup="menu">Hilfe</button>
+      </div>
+      <div class="mb-right">
+        <a class="mb-item" href="https://github.com/NojoMcDybo" target="_blank" rel="noopener" aria-label="GitHub-Profil">GitHub</a>
+        <time class="mb-item" id="mb-clock"></time>
+      </div>
+    </header>
+
+    <div id="notch-root"></div>
+
+    <div id="icons" role="list" aria-label="Desktop"></div>
+    <div id="windows"></div>
+
+    <nav id="dock" aria-label="Programme"><div class="dock-bar" id="dock-bar"></div></nav>
+    <div id="menu" role="menu" hidden></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- Aufklapp-Intro: ein Falt-Gerät öffnet sich, der Bildschirm zoomt bis zum Rand -->
+  <div id="stage" aria-label="Intro">
+    <div class="stage-bg"></div>
+    <div id="device" class="device">
+      <div class="dev-left"><div class="dev-wp"></div><div class="crease"></div></div>
+      <div class="flap" id="flap">
+        <div class="face inner"><div class="dev-wp right"></div><div class="shade"></div></div>
+        <div class="face cover">
+          <div class="cam"><i></i><i></i></div>
+          <div class="mark"><b>N</b><span>Nojo</span></div>
+          <div class="glint"></div>
+        </div>
+      </div>
+    </div>
+    <div class="stage-ui" id="stage-ui">
+      <button class="open-btn" id="open-btn" type="button">Zum Öffnen tippen</button>
+      <button class="skip-btn" id="skip-btn" type="button">Intro überspringen</button>
+    </div>
+  </div>
+
+  <noscript>
+    <p style="position:fixed;inset:0;display:grid;place-items:center;background:#0b0b0d;color:#f5f5f7;font:16px system-ui;text-align:center;padding:24px">
+      Dieses Portfolio ist ein Desktop im Browser und braucht JavaScript.<br>Meine Programme findest du auch direkt auf github.com/NojoMcDybo.
+    </p>
+  </noscript>
+</body>
+</html>

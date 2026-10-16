@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <script src="../../shim/tauri-shim.js"></script>
+    <script src="../../shim/app-kursbuch.js"></script>
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kursbuch</title>
+    <script type="module" crossorigin src="./assets/index-BpQZQ02m.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BDaF8uk8.css">
+  </head>
+  <body class="n-window">
+    <!-- Anmeldebild, Fokus-Modus und Pomodoro: siehe scene.ts. Oben die Leiste (rahmenlos, zum Ziehen): Konto und Semester links, in der Mitte die freie Zone der Notch, rechts Lupe und
+         Fensterknoepfe. Darunter eine grosse Flaeche mit runden oberen Ecken, die mit den Fensterraendern abschliesst:
+         Zeitstrahl, dann links die Kurse, in der Mitte der Stundenplan mit Wochenkalender, rechts die Abgaben. Nur Knoepfe und ausgewaehlte
+         Elemente sind Liquid Glass; Flaechen sind matt (main.ts baut alles zusammen). -->
+    <div id="dash">
+      <header class="top" data-tauri-drag-region>
+        <div class="grp l" data-tauri-drag-region>
+          <span id="acct-host"></span>
+          <nav class="sems n-seg n-liquid" aria-label="Semester"></nav>
+        </div>
+        <div class="nz" data-tauri-drag-region></div>
+        <div class="grp r" data-tauri-drag-region>
+          <button class="n-ico sm n-glass n-liquid syncbtn" title="Mit LearnWeb abgleichen" aria-label="Mit LearnWeb abgleichen"><i data-icon="refresh"></i></button>
+          <button class="n-ico sm n-glass n-liquid wbtn" hidden></button>
+          <button class="n-ico sm n-glass n-liquid find" title="Suchen (Strg+K)" aria-label="Suchen"><i data-icon="search"></i></button>
+          <button class="n-ico sm n-glass n-liquid bgbtn" title="Hintergrund: bewegter Farbverlauf oder weiches Beige" aria-label="Hintergrund wechseln"><i data-icon="sun"></i></button>
+          <button class="n-ico sm n-glass n-liquid fbtn" title="Fokus: To-dos, Pomodoro, Lernstreak" aria-label="Fokus"><i data-icon="timer"></i></button>
+          <button class="n-ico sm n-glass n-liquid drawer" data-drawer="dr" title="Abgaben"><i data-icon="abgabe"></i></button>
+        </div>
+      </header>
+      <!-- darunter (hinter der dunklen Flaeche): Anmeldebild und Fokus-Ansicht, beide auf dem farbigen Verlauf (scene.ts) -->
+      <div id="scene"></div>
+      <main class="sheet">
+        <button class="grab" title="Fokus-Modus: Fläche herunterfahren" aria-label="Fokus-Modus"></button>
+        <div class="sheet-in">
+          <div id="tl-host"></div>
+          <div class="cols">
+            <div class="slot l" id="slot-l"></div>
+            <div class="slot c" id="slot-c"></div>
+            <div class="slot r" id="slot-r"></div>
+          </div>
+        </div>
+      </main>
+      <div class="scrim" hidden></div>
+    </div>
+    <div class="toast n-glass n-liquid panel" role="alert" hidden></div>
+    <div class="sr" aria-live="polite"></div>
+  </body>
+</html>

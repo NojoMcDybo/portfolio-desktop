@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vantage</title>
+  <link rel="stylesheet" href="../../src/nojo-ui.css">
+  <link rel="stylesheet" href="vantage.css">
+  <script src="../../shim/tauri-shim.js"></script>
+  <script type="module" src="vantage.js"></script>
+</head>
+<body class="n-window">
+  <div class="fog" aria-hidden="true"><i></i><i></i></div>
+  <header class="top" data-tauri-drag-region>
+    <div class="brand" data-tauri-drag-region><span class="brand-v">V</span>antage</div>
+    <nav class="tabs n-seg n-glass" id="tabs" role="tablist" aria-label="Bereich">
+      <button role="tab" class="active" data-view="pro">Pro</button>
+      <button role="tab" data-view="me">Ich</button>
+      <button role="tab" data-view="studio">Studio</button>
+    </nav>
+    <div class="top-right" data-tauri-drag-region>
+      <button class="n-ico sm n-glass" id="gear" title="Einstellungen" aria-label="Einstellungen" aria-haspopup="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="pop n-glass" id="pop" hidden></div>
+  <main id="main"></main>
+  <div class="toast n-glass" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

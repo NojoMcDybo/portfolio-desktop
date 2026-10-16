@@ -1,0 +1,34 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--n-bg); overflow: auto; user-select: none; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; }
+button { font: inherit; color: inherit; cursor: pointer; }
+main { max-width: 720px; margin: 0 auto; padding: 22px 26px 30px; }
+header { padding-right: 150px; }
+h1 { margin: 2px 0 6px; font-size: 26px; }
+.lead { margin: 4px 0 18px; color: var(--n-dim); line-height: 1.55; max-width: 62ch; }
+.box { padding: 16px 18px; margin-bottom: 12px; }
+.sub { margin: 6px 0 12px; color: var(--n-dim); font-size: 13px; line-height: 1.5; }
+.grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+.grid .box { margin-bottom: 12px; }
+.src { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.src li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 9px 10px 9px 14px; border-radius: 14px; background: var(--n-surface-2); transition: opacity .2s, transform .35s var(--n-spring), background .2s; }
+.src li.off { opacity: .5; }
+.src b { font-weight: 600; } .src small { display: block; color: var(--n-faint); font-size: 12px; }
+.src .slot { margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: rgba(117,184,255,.18); color: #bcdcff; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; vertical-align: 1px; }
+.mv { display: flex; gap: 2px; }
+.mv button { width: 28px; height: 28px; border-radius: 9px; border: 0; background: none; color: var(--n-dim); display: grid; place-items: center; }
+.mv button:hover { background: rgba(255,255,255,.1); color: var(--n-ink); } .mv button:disabled { opacity: .25; pointer-events: none; }
+.mv svg { width: 14px; height: 14px; }
+.preview { display: grid; place-items: center; height: 74px; border-radius: 16px; background: radial-gradient(120% 140% at 50% 0, #2a2c33, #15161a); margin-top: 8px; }
+.pill { min-width: 150px; max-width: 100%; height: 34px; padding: 0 16px; border-radius: 0 0 14px 14px; background: #000; display: flex; gap: 14px; align-items: center; justify-content: center; align-self: start; font-weight: 600; font-variant-numeric: tabular-nums; transition: min-width .5s var(--n-spring); box-shadow: 0 8px 20px rgba(0,0,0,.4); }
+.pill small { color: rgba(255,255,255,.55); font-weight: 400; }
+.pill .eq { display: flex; gap: 2.5px; align-items: center; height: 13px; } .pill .eq i { width: 3px; height: 100%; border-radius: 2px; background: #fff; animation: eq .9s ease-in-out infinite alternate; } .pill .eq i:nth-child(2) { animation-delay: -.3s; } .pill .eq i:nth-child(3) { animation-delay: -.6s; }
+@keyframes eq { from { transform: scaleY(.25); } to { transform: scaleY(1); } }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.n-seg { width: max-content; max-width: 100%; }
+
+/* Schalter als <span role=switch>: gleiche Optik wie input:checked + .n-switch */
+.n-switch { cursor: pointer; }
+.n-switch[aria-checked="true"] { background: rgba(255, 255, 255, 0.86); box-shadow: 0 0 12px rgba(255, 255, 255, 0.22); }
+.n-switch[aria-checked="true"]::after { left: 19px; background: var(--n-bg); }
