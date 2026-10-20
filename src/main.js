@@ -1,6 +1,6 @@
 // Einstieg: Intro abspielen, Desktop aufbauen (Menüleiste, Dock, Symbole), Fenster und Notch verdrahten.
 import { APPS, LEARN, MORE, byId } from "./apps.js";
-import { runIntro } from "./fold.js";
+import { runIntro } from "./intro.js";
 import { WM, h } from "./wm.js";
 import { appFooter, siteFooter, buildLearn, buildWelcome } from "./chrome.js";
 import { createNotchHost } from "./notch-host.js";
@@ -243,19 +243,13 @@ function toast(text) {
 }
 
 // ---------- Start ----------
-// Aufbau des Desktops nach dem Hineinzoomen: Menüleiste fährt herunter, Dock hebt sich, die Symbole springen nacheinander ein
-function bootReveal() {
-  animate("#menubar", { y: ["-100%", 0], opacity: [0, 1] }, { type: "spring", stiffness: 210, damping: 24 });
-  animate(".dock-bar", { y: [90, 0], opacity: [0, 1] }, { type: "spring", stiffness: 190, damping: 22 });
-  animate(".dk img", { scale: [0.3, 1], opacity: [0, 1] }, { delay: stagger(0.05, { startDelay: 0.18 }), type: "spring", stiffness: 420, damping: 20 });
-  animate("#icons .dicon", { opacity: [0, 1], x: [-20, 0] }, { delay: stagger(0.07, { startDelay: 0.35 }), type: "spring", stiffness: 300, damping: 26 });
-}
+// Der Desktop steht schon fertig hinter dem Intro (src/intro.js); das Hochziehen des Balkens macht ihn scharf
 const skip = /[?&#]skip\b/.test(location.search + location.hash);
 document.body.classList.add("booting");
 // zum Testen: ?open=arena öffnet ein Programm sofort
 const params = new URLSearchParams(location.search);
 if (params.has("debug")) window.__wm = wm; // nur zum Testen im Browser
-runIntro({ skip, onReveal: bootReveal }).then(() => {
+runIntro({ skip }).then(() => {
   setTimeout(() => notch.show(), 250);
   setTimeout(() => {
     const first = params.get("open");

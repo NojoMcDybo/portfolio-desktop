@@ -22,40 +22,39 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--n-accent); outline-offset: 2px; }
 
 /* ================= Intro ================= */
+/* Der fertige Desktop liegt darunter. Drei Milchglas-Ebenen (Unschärfe 6/16/36 px) decken ihn ab; ihre Masken öffnen sich vom
+   Balken aus (intro.js). Abdunklung, Schriftzug und Balken werden dort aus einem einzigen Wert berechnet. */
 
-#stage { position: fixed; inset: 0; z-index: 1000; perspective: 2600px; perspective-origin: 50% 46%; overflow: hidden; }
-.stage-bg { position: absolute; inset: 0; background: radial-gradient(70% 60% at 50% 45%, #15171d, #050506 70%); }
-.device { position: absolute; left: 0; top: 0; transform-style: preserve-3d; transform-origin: 50% 50%; will-change: transform; }
-.dev-left, .flap { position: absolute; top: 0; height: 100%; width: 50%; }
-.dev-left { left: 0; border-radius: var(--dr, 40px) 0 0 var(--dr, 40px); overflow: hidden; background: var(--wp-base); }
-.dev-wp { position: absolute; inset: 0; width: 200%; background: var(--wp); }
-.dev-wp.right { left: -100%; }
-.crease { position: absolute; top: 0; right: 0; width: 70px; height: 100%; background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5)); opacity: var(--cr, 0); }
-.flap { left: 50%; transform-origin: 0 50%; transform-style: preserve-3d; transform: translateZ(1px) rotateY(-180deg); will-change: transform; }
-.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
-.face.inner { border-radius: 0 var(--dr, 40px) var(--dr, 40px) 0; background: var(--wp-base); }
-.face.inner .dev-wp { left: -100%; }
-.shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.05) 55%, rgba(0, 0, 0, 0.0)); opacity: var(--sh, 1); pointer-events: none; }
-.face.cover { transform: rotateY(180deg); border-radius: var(--dr, 40px) 0 0 var(--dr, 40px); background:
-  linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 38%),
-  linear-gradient(160deg, #3a3d46, #1b1c22 52%, #0f1014);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.13), inset 0 0 0 calc(var(--dr, 40px) * 0.28) rgba(0, 0, 0, 0.35); }
-.face.cover::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 70% at 80% 0%, rgba(255, 255, 255, 0.12), transparent 60%); pointer-events: none; }
-.cam { position: absolute; left: 7%; top: 5%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.2%; width: 20%; padding: 2.4%; border-radius: 22%; background: #0b0b0d; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); aspect-ratio: 1; }
-.cam i { border-radius: 50%; background: radial-gradient(circle at 35% 30%, #2d4a6e, #05080c 62%); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.07); }
-.mark { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 10px; }
-.mark b { font: 700 calc(var(--vw, 1200px) * 0.085) / 1 var(--n-font-display); color: #f5f5f7; opacity: 0.92; letter-spacing: -0.04em; text-shadow: 0 0 40px rgba(117, 184, 255, 0.45); }
-.mark span { font: 600 calc(var(--vw, 1200px) * 0.014) / 1 var(--n-font); letter-spacing: 0.5em; text-transform: uppercase; color: var(--n-dim); padding-left: 0.5em; }
-.glint { position: absolute; inset: -20%; background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.16) 50%, transparent 58%); transform: translateX(-120%); animation: glint 5.5s var(--n-ease) 1.2s infinite; pointer-events: none; }
-@keyframes glint { 0% { transform: translateX(-120%); } 38%, 100% { transform: translateX(120%); } }
+#stage { position: fixed; inset: 0; z-index: 1000; overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+#stage.drag { cursor: grabbing; }
+/* Einblenden aus Schwarz, damit die Seite nicht unscharf "hereinblitzt" */
+#stage::after { content: ""; position: absolute; inset: 0; background: #050506; pointer-events: none; animation: stage-in 0.9s 0.05s ease-out forwards; }
+@keyframes stage-in { to { opacity: 0; } }
+.veil { position: absolute; inset: 0; pointer-events: none; }
+.veil:nth-child(1) { -webkit-backdrop-filter: blur(6px) saturate(115%); backdrop-filter: blur(6px) saturate(115%); }
+.veil:nth-child(2) { -webkit-backdrop-filter: blur(16px) saturate(120%); backdrop-filter: blur(16px) saturate(120%); }
+.veil:nth-child(3) { -webkit-backdrop-filter: blur(36px) saturate(125%); backdrop-filter: blur(36px) saturate(125%); }
+.veil-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 55%, rgba(10, 11, 16, 0.3), rgba(5, 5, 8, 0.78)); }
+.veil-glint { position: absolute; inset: -10% -30%; pointer-events: none; opacity: 0; background: linear-gradient(105deg, transparent 44%, rgba(255, 255, 255, 0.14) 50%, transparent 56%); }
 
-.stage-ui { position: absolute; left: 0; right: 0; bottom: max(7vh, 40px); display: grid; justify-items: center; gap: 14px; transition: opacity 0.4s; }
+.hero { position: absolute; left: 0; right: 0; top: 15%; display: grid; justify-items: center; gap: 12px; padding: 0 20px; text-align: center; pointer-events: none; will-change: transform, filter, opacity; }
+.hero span { font: 600 clamp(11px, 1.2vw, 14px) / 1 var(--n-font); letter-spacing: 0.5em; padding-left: 0.5em; text-transform: uppercase; color: rgba(245, 245, 247, 0.62); }
+.hero b { font: 700 clamp(72px, 15vw, 190px) / 0.95 var(--n-font-display); letter-spacing: -0.045em; color: #f5f5f7; text-shadow: 0 0 60px rgba(117, 184, 255, 0.4); }
+.hero .hero-sub { font: 500 clamp(13px, 1.6vw, 17px) / 1.4 var(--n-font); letter-spacing: 0; padding: 0; margin-top: 14px; text-transform: none; }
+
+/* Balken: Mitte genau auf der 60-%-Linie; die Hülle bewegt intro.js, der Innenteil nickt als Hinweis */
+.pull { position: absolute; left: 0; right: 0; top: 60%; height: 0; display: grid; justify-items: center; will-change: transform, opacity; }
+.pull-nudge { display: grid; justify-items: center; gap: 12px; margin-top: -22px; }
+.pull-bar { width: min(220px, 58vw); height: 44px; display: grid; place-items: center; cursor: inherit; }
+.pull-bar i { display: block; width: 100%; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 34px rgba(117, 184, 255, 0.55), 0 6px 22px rgba(0, 0, 0, 0.35); }
+.pull-hint { font: 600 12px / 1 var(--n-font); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245, 245, 247, 0.62); }
+.pull-hint::before { content: ""; display: block; width: 9px; height: 9px; margin: 0 auto 10px; border: solid currentColor; border-width: 2px 0 0 2px; transform: rotate(45deg); }
+
+.stage-ui { position: absolute; left: 0; right: 0; bottom: max(5vh, 28px); display: grid; justify-items: center; }
 .stage-ui.gone { opacity: 0 !important; pointer-events: none; }
-.open-btn { padding: 12px 26px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.2); color: var(--n-ink); font: 600 14px var(--n-font); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); animation: breathe 2.8s ease-in-out infinite; transition: background 0.3s; }
-.open-btn:hover { background: rgba(255, 255, 255, 0.17); }
-@keyframes breathe { 50% { transform: scale(1.04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 28px rgba(117, 184, 255, 0.25); } }
-.skip-btn { color: var(--n-faint); font-size: 12px; padding: 4px 8px; }
-.skip-btn:hover { color: var(--n-dim); }
+.skip-btn { color: rgba(245, 245, 247, 0.5); font-size: 12px; padding: 6px 10px; cursor: pointer; }
+.skip-btn:hover { color: rgba(245, 245, 247, 0.85); }
 
 /* ================= Desktop ================= */
 
@@ -71,8 +70,10 @@ a { color: inherit; }
 @keyframes drift2 { to { transform: translate3d(-12vmax, 12vmax, 0) scale(0.9); } }
 @keyframes drift3 { to { transform: translate3d(10vmax, -8vmax, 0) scale(1.2); } }
 
-/* beim Hineinzoomen bauen sich die Teile nacheinander auf */
-body.booting #menubar, body.booting #dock, body.booting #icons, body.booting #notch-root { visibility: hidden; }
+/* hinter dem Intro steht der Desktop fertig; nur die Notch erscheint erst danach. Die Hintergrundkugeln ruhen, weil das Milchglas sie sonst in jedem Bild neu weichzeichnet */
+body.booting #notch-root { visibility: hidden; }
+body.booting .wallpaper i { animation-play-state: paused; }
+#desktop { transform-origin: 50% 60%; }
 
 /* ---- Menüleiste ---- */
 #menubar { position: absolute; inset: 0 0 auto 0; height: var(--menubar); display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 900;

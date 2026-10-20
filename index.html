@@ -15,7 +15,7 @@
   <script type="module" src="src/main.js"></script>
 </head>
 <body>
-  <!-- Desktop liegt unter dem Aufklapp-Intro und wird erst beim Hineinzoomen sichtbar -->
+  <!-- Desktop liegt fertig unter dem Intro-Milchglas; das Hochziehen des Balkens löst die Unschärfe auf -->
   <div id="desktop" aria-hidden="true">
     <div class="wallpaper" aria-hidden="true"><i></i><i></i><i></i></div>
 
@@ -42,22 +42,23 @@
     <div id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <!-- Aufklapp-Intro: ein Falt-Gerät öffnet sich, der Bildschirm zoomt bis zum Rand -->
+  <!-- Intro: drei Milchglas-Ebenen (stufenweise Unschärfe), Abdunklung, Schriftzug und der Balken auf 60 % Höhe -->
   <div id="stage" aria-label="Intro">
-    <div class="stage-bg"></div>
-    <div id="device" class="device">
-      <div class="dev-left"><div class="dev-wp"></div><div class="crease"></div></div>
-      <div class="flap" id="flap">
-        <div class="face inner"><div class="dev-wp right"></div><div class="shade"></div></div>
-        <div class="face cover">
-          <div class="cam"><i></i><i></i></div>
-          <div class="mark"><b>N</b><span>Nojo</span></div>
-          <div class="glint"></div>
-        </div>
+    <div class="veil"></div><div class="veil"></div><div class="veil"></div>
+    <div class="veil-dim" id="veil-dim"></div>
+    <div class="veil-glint" id="veil-glint"></div>
+    <div class="hero" id="hero" aria-hidden="true">
+      <span>Desktop-Portfolio</span>
+      <b>Nojo</b>
+      <span class="hero-sub">Eigene Programme – direkt im Browser ausprobieren</span>
+    </div>
+    <div class="pull" id="pull">
+      <div class="pull-nudge" id="pull-nudge">
+        <button class="pull-bar" id="open-btn" type="button" aria-label="Zum Öffnen nach oben ziehen oder Enter drücken"><i></i></button>
+        <span class="pull-hint" id="pull-hint">Zum Öffnen nach oben ziehen</span>
       </div>
     </div>
     <div class="stage-ui" id="stage-ui">
-      <button class="open-btn" id="open-btn" type="button">Zum Öffnen tippen</button>
       <button class="skip-btn" id="skip-btn" type="button">Intro überspringen</button>
     </div>
   </div>
