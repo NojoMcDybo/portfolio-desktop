@@ -1,6 +1,6 @@
 # Nojo – Desktop-Portfolio
 
-Mein Portfolio ist ein Desktop im Browser. Die Seite liegt zuerst hinter Milchglas; ein Balken auf 60 % der Höhe lässt sich hochziehen, und die Unschärfe löst sich vom Balken aus auf. Darunter liegen meine Programme im Dock: **Arena**, **Vantage**, **Notch**, **Haze**, **Streamdock**, **Kursbuch** und der **nebel.-Simulator**, dazu der Ordner **Lernseiten** mit meinen Klausur-Trainern. Oben sitzt die Notch.
+Mein Portfolio ist ein Desktop im Browser. Die Seite ist der Bildschirm eines zugeklappten Laptop-Deckels; der Griffbalken auf 60 % der Höhe lässt sich hochziehen, der Deckel klappt um sein Scharnier auf, der Bildschirm geht unscharf an und wird klar, und die Kamera fährt heran. Dann liegen dort meine Programme im Dock: **Arena**, **Vantage**, **Notch**, **Haze**, **Streamdock**, **Kursbuch** und der **nebel.-Simulator**, dazu der Ordner **Lernseiten** mit meinen Klausur-Trainern. Oben sitzt die Notch.
 
 Jedes Programm läuft im Fenster mit Beispieldaten und lässt sich ausprobieren. Unten im Fenster steht der Knopf für den **Installer** (Version und Größe kommen live aus dem jeweiligen GitHub-Release).
 
@@ -10,7 +10,7 @@ Kein Framework: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-M
 
 | Ordner | Inhalt |
 |---|---|
-| `index.html`, `src/` | Intro (`intro.js`, die Idee des Auflösens stammt aus [iphone-duo-animation](https://github.com/akashtdev/iphone-duo-animation), MIT; kein Code übernommen), Fensterverwaltung (`wm.js`), Dock und Menüleiste (`main.js`), Notch (`notch.js`), Fußzeile und Info-Blatt mit Installer (`chrome.js`, `downloads.js`) |
+| `index.html`, `src/` | Intro (`intro.js`: CSS-3D-Deckel, ein Fortschrittswert wie in [iphone-duo-animation](https://github.com/akashtdev/iphone-duo-animation), MIT; kein Code übernommen), Fensterverwaltung (`wm.js`), Dock und Menüleiste (`main.js`), Notch (`notch.js`), Fußzeile und Info-Blatt mit Installer (`chrome.js`, `downloads.js`) |
 | `src/motion.js`, `vendor/` | Motion (gepinnt, mit Lizenz) und die gemeinsamen Federn `SPRING`, `POP`, `SOFT` sowie `lift()` und `reveal()` |
 | `apps/` | die Programme im Fenster (siehe unten) |
 | `shim/` | Tauri-Attrappe (`tauri-shim.js`) und je Programm die Beispiel-Antworten (`app-*.js`) |

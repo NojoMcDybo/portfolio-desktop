@@ -14,8 +14,8 @@
   <script defer src="vendor/motion-13.5.0.js"></script>
   <script type="module" src="src/main.js"></script>
 </head>
-<body>
-  <!-- Desktop liegt fertig unter dem Intro-Milchglas; das Hochziehen des Balkens löst die Unschärfe auf -->
+<body class="booting">
+  <!-- Der Desktop liegt fertig da und ist der Bildschirm des Intro-Deckels; beim Aufklappen löst sich seine Unschärfe auf -->
   <div id="desktop" aria-hidden="true">
     <div class="wallpaper" aria-hidden="true"><i></i><i></i><i></i></div>
 
@@ -42,22 +42,21 @@
     <div id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <!-- Intro: drei Milchglas-Ebenen (stufenweise Unschärfe), Abdunklung, Schriftzug und der Balken auf 60 % Höhe -->
+  <!-- Intro: ein Laptop-Deckel. Der Desktop ist sein Bildschirm (wird in intro.js gedreht); hier liegen Rahmen, Deckelaußenseite und Unterteil.
+       Alle vier teilen dasselbe Scharnier (untere Mitte des Fensters) und dieselbe Kamera; welche Seite des Deckels man sieht, entscheidet backface-visibility. -->
   <div id="stage" aria-label="Intro">
-    <div class="veil"></div><div class="veil"></div><div class="veil"></div>
-    <div class="veil-dim" id="veil-dim"></div>
-    <div class="veil-glint" id="veil-glint"></div>
-    <div class="hero" id="hero" aria-hidden="true">
-      <span>Desktop-Portfolio</span>
-      <b>Nojo</b>
-      <span class="hero-sub">Eigene Programme – direkt im Browser ausprobieren</span>
-    </div>
-    <div class="pull" id="pull">
-      <div class="pull-nudge" id="pull-nudge">
-        <button class="pull-bar" id="open-btn" type="button" aria-label="Zum Öffnen nach oben ziehen oder Enter drücken"><i></i></button>
-        <span class="pull-hint" id="pull-hint">Zum Öffnen nach oben ziehen</span>
+    <div class="lid-shadow" id="lid-shadow"></div>
+    <div class="lid-base" id="lid-base"><div class="base-face"><i class="keys"></i><i class="pad"></i></div></div>
+    <div class="lid-cover" id="lid-cover">
+      <div class="cover-face">
+        <b class="cover-mark">N</b>
+        <i class="cover-sheen" id="cover-sheen"></i>
+        <i class="grab"></i>
       </div>
     </div>
+    <div class="lid-frame" id="lid-frame"><div class="frame-ring"><i class="grab"></i></div></div>
+    <div class="pull-hint" id="pull-hint">Deckel hochziehen</div>
+    <button class="sr-only" id="open-btn" type="button">Zum Öffnen Enter drücken oder den Deckel nach oben ziehen</button>
     <div class="stage-ui" id="stage-ui">
       <button class="skip-btn" id="skip-btn" type="button">Intro überspringen</button>
     </div>
