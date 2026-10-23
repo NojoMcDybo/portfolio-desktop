@@ -1,19 +1,24 @@
-// Desktop-Hintergrund: ein riesiger Baum in echter Tiefe (WebGL2), alles in Oberflächen-stabilem Fraktal-Dithering (siehe wallpaper-shaders.js).
-// Wind bewegt Äste, Laub und Gras, Vögel sitzen und fliegen, der Himmel folgt Datum und Uhrzeit (daylight.js), und der Blick durchs "Fenster"
-// folgt dem Kopf (Webcam) oder der Maus (head.js): ferne Ebenen laufen mit, nahe dagegen.
+// Desktop-Hintergrund: eine hohe Marmorhalle mit Oberlicht und einem riesigen Baum in echter Tiefe (WebGL2), alles in Oberflächen-stabilem
+// Fraktal-Dithering (siehe wallpaper-shaders.js). Licht fällt durchs Oberlicht, bildet Strahlen und vom Laub gefleckte Lichtflecken auf dem
+// Boden. Wind bewegt Äste und Laub, Vögel sitzen und fliegen, Himmel und Licht folgen Datum und Uhrzeit (daylight.js), und der Blick durchs
+// "Fenster" folgt dem Kopf (Webcam) oder der Maus (head.js): ferne Ebenen laufen mit, nahe dagegen.
 import { Kopf } from "./head.js";
 import { light, presetDate } from "./daylight.js";
 import { S } from "./stage.js";
-import { SKY, HILL, TREE, LEAF, BIRD, GRASS, MOTE } from "./wallpaper-shaders.js";
+import { P_SKY, P_HALL, P_TREE, P_LEAF, P_BIRD, P_MOTE } from "./wallpaper-shaders.js";
 
 const HD0 = 3.4; // Abstand des Betrachters zum Fenster in halben Bildhöhen
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const mix = (a, b, t) => a + (b - a) * t;
+const mixv = (a, b, t) => a.map((v, i) => mix(v, b[i], t));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-const hash1 = (n) => { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); };
-const noise1 = (x) => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return mix(hash1(i), hash1(i + 1), u); };
-const fbm1 = (x) => noise1(x) * 0.5 + noise1(x * 2.03 + 7.1) * 0.25 + noise1(x * 4.07 + 3.3) * 0.125;
+
+// Halle (Weltmaße; Bildschirm bei z = 0, halbe Bildhöhe = 1, z wächst in die Tiefe)
+const YF = -1.9, YC = 2.9, ZB = 8, ZN = -2, ZT = 6.7; // Boden, Decke, Rückwand, nahes Ende, Standort des Baums
+const STEPS = [[ZN, 2.2, 4.3], [2.2, 4.3, 3.5], [4.3, 6.2, 2.95], [6.2, ZB, 2.5]]; // Wandabschnitte: von z, bis z, halbe Breite (nach hinten schmaler)
+const SKYLIGHT = [0, 6.2, 2.3, 1.8]; // Oberlicht: Mitte x, Mitte z, halbe Breite, halbe Tiefe
+const CROWN = [0, 0.7, ZT, 2.1]; // Baumkrone für die Laubschatten
 
 // ---------- Dither-Muster (3D-Textur) ----------
 // 4 × 4 Bayer-Punkte; Schicht k enthält die ersten k+1 Punkte als runde Verläufe, Z wächst also mit der Punktzahl
@@ -59,75 +64,96 @@ function makePattern(gl) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 }
 
+// ---------- Szene: Halle ----------
+function hallMesh() {
+  const v = [];
+  const quad = (a, b, c, d, n, m) => { for (const p of [a, b, c, a, c, d]) v.push(...p, ...n, m); };
+  const w0 = STEPS[0][2];
+  quad([-w0, YF, ZN], [w0, YF, ZN], [w0, YF, ZB], [-w0, YF, ZB], [0, 1, 0], 0);
+  quad([-w0, YC, ZN], [w0, YC, ZN], [w0, YC, ZB], [-w0, YC, ZB], [0, -1, 0], 3);
+  STEPS.forEach(([z0, z1, w], k) => {
+    quad([-w, YF, z0], [-w, YF, z1], [-w, YC, z1], [-w, YC, z0], [1, 0, 0], 1);
+    quad([w, YF, z0], [w, YF, z1], [w, YC, z1], [w, YC, z0], [-1, 0, 0], 1);
+    const nw = STEPS[k + 1]?.[2];
+    if (nw) { // Stufe zum nächsten, schmaleren Abschnitt: die Fläche zeigt zum Betrachter
+      quad([-w, YF, z1], [-nw, YF, z1], [-nw, YC, z1], [-w, YC, z1], [0, 0, -1], 2);
+      quad([w, YF, z1], [nw, YF, z1], [nw, YC, z1], [w, YC, z1], [0, 0, -1], 2);
+    }
+  });
+  const wb = STEPS[STEPS.length - 1][2];
+  quad([-wb, YF, ZB], [wb, YF, ZB], [wb, YC, ZB], [-wb, YC, ZB], [0, 0, -1], 2);
+  return new Float32Array(v);
+}
+
 // ---------- Szene: Baum ----------
-// Koordinaten: x rechts, y oben, halbe Bildhöhe = 1, z = Tiefe hinter dem Bildschirm (negativ: davor). Stamm und Äste sind Bänder
-// (Mittellinie + Radius), das Laub sind Haufen an den Zweigspitzen.
+// Stamm mit breitem Wurzelanlauf, Wurzeln auf dem Boden, Äste in vier Stufen als Bänder (Mittellinie + Radius), Laub als Haufen an den
+// Zweigen und als Hülle der runden Krone.
 function buildTree(seed, keep) {
   const rnd = rng(seed), R = (a, b) => mix(a, b, rnd());
   const ribbons = [], clumps = [], perches = [];
-  const TZ = 0.9, FORK = 0.45;
+  const TH = 2.0; // Stammhöhe bis zur Krone
 
-  // Stamm: leicht geschwungen, unten mit Wurzelanlauf, teilt sich oben in zwei Leitäste
   const trunk = [];
-  for (let i = 0; i <= 26; i++) {
-    const t = i / 26;
-    trunk.push({ x: 0.06 * Math.sin(t * 4.2 + 0.5) * t, y: -1.05 + t * (FORK + 1.05), z: TZ, r: 0.42 * (1 - 0.2 * t) + 0.55 * Math.exp(-t * 12), flex: 0.012 * t * t });
+  for (let i = 0; i <= 28; i++) {
+    const t = i / 28;
+    trunk.push({ x: 0.07 * Math.sin(t * 5 + 0.4) * t, y: YF - 0.15 + t * (TH + 0.15), z: ZT, r: 0.4 * (1 - 0.2 * t) + 0.95 * Math.exp(-t * 9), flex: 0.01 * t * t });
   }
   ribbons.push({ pts: trunk, ph: 0.3 });
-  const trunkAt = (y) => { const t = clamp((y + 1.05) / (FORK + 1.05), 0, 0.999) * 26, i = Math.floor(t), f = t - i; return { x: mix(trunk[i].x, trunk[i + 1].x, f), r: mix(trunk[i].r, trunk[i + 1].r, f) }; };
+  const trunkX = (y) => { const t = clamp((y - YF + 0.15) / (TH + 0.15), 0, 0.999) * 28, i = Math.floor(t); return mix(trunk[i].x, trunk[i + 1].x, t - i); };
+
+  // Wurzeln: steigen am Stamm an und laufen in einem Bogen zum Boden, einige zum Betrachter hin oder von ihm weg
+  for (let i = 0; i < 11; i++) {
+    const side = i % 2 ? 1 : -1, len = R(0.9, 2.1) * (i < 4 ? 1.25 : 0.85), r0 = R(0.26, 0.4), dz = R(-0.9, 0.9), h0 = R(0.35, 1.0), ph = R(0, 6), pts = [], n = 14;
+    for (let k = 0; k <= n; k++) {
+      const t = k / n, r = r0 * (1 - 0.86 * t) + 0.018;
+      pts.push({ x: side * (0.3 + len * t), y: YF + r * 0.5 + h0 * Math.exp(-t * 4.2) + 0.04 * Math.sin(t * 7 + ph) * (1 - t), z: ZT + dz * t * 0.6, r, flex: 0 });
+    }
+    ribbons.push({ pts, ph });
+  }
 
   const addClump = (x, y, z, s, flex, ao) => { if (rnd() < keep) clumps.push({ x, y, z, s, flex, ph: rnd() * 6.283, ao, hue: rnd() }); };
 
   // Ast: Mittellinie mit Krümmung, außen hängt er durch; Kinder zweigen im Winkel zur Wuchsrichtung ab
   function branch(x, y, z, side, angDeg, len, zs, r0, level, flex0, o = {}) {
-    const n = Math.max(8, Math.round(len * 10)), step = len / n, pts = [], taper = o.taper ?? 0.82;
+    const n = Math.max(8, Math.round(len * 10)), step = len / n, pts = [];
     let a = (angDeg * Math.PI) / 180, cx = x, cy = y, cz = z;
     const curve = R(-0.3, 0.3) * (level ? 1.5 : 0.7);
     for (let i = 0; i <= n; i++) {
       const t = i / n;
-      pts.push({ x: cx, y: cy, z: cz, a, r: r0 * (1 - taper * t) * (t > 0.82 ? 1 - ((t - 0.82) / 0.18) * 0.92 : 1) + 0.006, // läuft außen in einer Spitze aus
-        flex: flex0 + t * (level === 0 ? 0.5 : 0.8) });
+      pts.push({ x: cx, y: cy, z: cz, a, r: r0 * (1 - 0.82 * t) * (t > 0.82 ? 1 - ((t - 0.82) / 0.18) * 0.92 : 1) + 0.006, flex: flex0 + t * (level === 0 ? 0.5 : 0.8) }); // läuft außen in einer Spitze aus
       cx += side * Math.cos(a) * step; cy += Math.sin(a) * step; cz += zs * step;
-      a += curve * step - (t > (o.droopFrom ?? 0.5) ? (o.droop ?? 0.45) * step : 0);
+      a += curve * step - (t > 0.5 ? (o.droop ?? 0.4) * step : 0);
       a = clamp(a, -0.5, 1.45);
     }
     ribbons.push({ pts, ph: rnd() * 6.283 });
     if (o.perch) for (const t of o.perch) { const p = pts[Math.round(t * n)]; perches.push({ x: p.x, y: p.y + p.r * 0.85, z: p.z }); }
-    // Laub: außen an den Zweigen, an den Hauptästen nur das äußere Drittel
-    const from = level === 0 ? (o.leafFrom ?? 0.62) : 0.3, spacing = level === 0 ? 0.32 : 0.24;
+    // Laub: außen an den Zweigen; an den Hauptästen nur das äußere Drittel, an den feinsten Zweigen nur die Spitze
+    const from = [0.62, 0.3, 0.35, 0.7][level], spacing = [0.34, 0.26, 0.22, 1][level];
     for (let d = from * len; d <= len; d += spacing * (0.8 + 0.4 * rnd())) {
+      if (level === 3 && rnd() < 0.4) continue;
       const p = pts[Math.min(n, Math.round((d / len) * n))], t = d / len;
-      addClump(p.x + R(-0.08, 0.08), p.y + R(0, 0.14), p.z + R(-0.3, 0.3), R(0.2, 0.38) * (1 - 0.2 * t), p.flex * 0.9 + 0.3, 0.5 + 0.5 * t);
+      addClump(p.x + R(-0.08, 0.08), p.y + R(0, 0.12), p.z + R(-0.35, 0.35), R(0.2, 0.36) * (1 - 0.2 * t), p.flex * 0.9 + 0.3, 0.5 + 0.5 * t);
     }
-    if (level < 2) {
-      const kids = o.kids ?? (level === 0 ? 5 : 3);
+    if (level < 3) {
+      const kids = [5, 4, 3][level];
       for (let k = 0; k < kids; k++) {
-        const t = 0.25 + ((k + rnd() * 0.6) / kids) * 0.7, p = pts[Math.min(n, Math.round(t * n))];
+        const t = 0.22 + ((k + rnd() * 0.6) / kids) * 0.72, p = pts[Math.min(n, Math.round(t * n))];
         const ca = (p.a * 180) / Math.PI + (k % 2 ? 1 : -1) * R(25, 55);
-        branch(p.x, p.y, p.z, side, ca, len * R(0.34, 0.5), zs * 0.4 + R(-0.2, 0.2), p.r * 0.62, level + 1, p.flex);
+        branch(p.x, p.y, p.z, side, ca, len * R(0.36, 0.5), zs * 0.4 + R(-0.25, 0.25), p.r * 0.62, level + 1, p.flex);
       }
     }
   }
-  // Ausladende Äste unter der Gabelung: Höhe am Stamm, Seite, Steigung, Länge, Tiefenrichtung, Dicke, Sitzstangen
+  // Hauptäste am oberen Stamm: Höhe, Seite, Steigung, Länge, Tiefenrichtung, Dicke, Sitzstangen (Anteil der Länge)
   const LIMBS = [
-    [-0.42, 1, 16, 2.9, 0.10, 0.10, [0.34, 0.46]], [-0.22, -1, 20, 3.0, 0.12, 0.11, [0.40]], [0.02, 1, 27, 2.6, 0.14, 0.10, [0.38]],
-    [0.18, -1, 34, 2.5, 0.10, 0.09], [0.30, 1, 40, 2.3, 0.18, 0.085],
+    [-0.30, 1, 24, 2.7, 0.15, 0.16, [0.28, 0.38]], [-0.12, -1, 30, 2.3, -0.12, 0.16, [0.32]], [0.04, 1, 40, 2.0, 0.2, 0.14, [0.3]],
+    [0.16, -1, 48, 2.5, 0.1, 0.14], [0.28, 1, 58, 1.7, -0.15, 0.12], [0.34, -1, 64, 1.5, 0.18, 0.12], [0.4, 1, 78, 1.3, 0, 0.11], [0.4, -1, 82, 1.4, 0, 0.11],
   ];
-  for (const [y, side, ang, len, zs, r0, perch] of LIMBS) {
-    const tr = trunkAt(y);
-    branch(tr.x, y, TZ + 0.14, side, ang, len, zs, r0, 0, 0.02, { perch, droop: 0.28 });
+  for (const [y, side, ang, len, zs, r0, perch] of LIMBS) branch(trunkX(YF + TH * 0.5 + y), YF + TH + y, ZT + R(-0.1, 0.2), side, ang, len, zs, r0, 0, 0.02, { perch });
+  // Hülle der Krone: Haufen in einer Halbkugel-Schale, innen bleibt es licht
+  for (let i = 0; i < 70; i++) {
+    const u = R(-1, 1), v = R(0, 1), r = R(0.75, 1), c = Math.sqrt(1 - u * u);
+    addClump(u * 2.4 * r, CROWN[1] - 0.3 + v * 1.2 * r * c, ZT + R(-1.4, 1.4) * c, R(0.25, 0.4), R(0.5, 0.9), R(0.4, 0.9));
   }
-  // zwei Leitäste setzen den Stamm fort und tragen die Krone; zwischen ihnen bleibt der Himmel offen
-  const top = trunk[trunk.length - 1];
-  branch(top.x - 0.1, FORK - 0.05, TZ - 0.04, -1, 60, 2.9, -0.06, 0.25, 0, 0.02, { taper: 0.7, kids: 7, leafFrom: 0.4, droopFrom: 0.3, droop: 0.32 });
-  branch(top.x + 0.1, FORK - 0.05, TZ + 0.04, 1, 57, 2.9, 0.08, 0.24, 0, 0.02, { taper: 0.7, kids: 7, leafFrom: 0.4, droopFrom: 0.3, droop: 0.32 });
-  // Kronendach: Haufen links und rechts über den Leitästen, in der Mitte nur wenige
-  for (let i = 0; i < 40; i++) {
-    const x = (rnd() < 0.5 ? -1 : 1) * R(0.35, 2.6), y = R(0.95, 1.6) - Math.abs(x) * 0.06;
-    addClump(x, y, R(-0.1, 1.9), R(0.28, 0.5), R(0.5, 0.9), R(0.35, 0.8));
-  }
-  // einige große Blätter weit vorn als Rahmen
-  for (let i = 0; i < 6; i++) addClump((i % 2 ? 1 : -1) * R(1.7, 2.7), R(0.6, 1.5), R(-1.1, -0.55), R(0.45, 0.7), 0.9, 0.95);
   return { ribbons, clumps, perches };
 }
 
@@ -150,16 +176,6 @@ function ribbonMesh(ribbons) {
   return { verts: new Float32Array(v), idx: new Uint32Array(idx) };
 }
 
-// Kammlinie als Streifen (oben die Linie, unten ein Fußpunkt), in Bildschirmeinheiten der Ebene gerechnet
-function hillStrip(z, base, amp, freq, ridge, seed, floor = -2.6) {
-  const f = HD0 / (HD0 + z), step = 0.02, range = 7.5, v = [];
-  for (let u = -range; u <= range; u += step) {
-    const y = base + (fbm1(u * freq + seed) - 0.35) * amp + ridge * (noise1(u * 38 + seed) - 0.4) * (0.4 + noise1(u * 3 + seed));
-    v.push(u / f, y, z, 0, u / f, floor, z, 1);
-  }
-  return new Float32Array(v);
-}
-
 // ---------- Hauptprogramm ----------
 export function startWallpaper(canvas) {
   const gl = canvas.getContext("webgl2", { alpha: false, antialias: false, powerPreference: "high-performance" });
@@ -177,7 +193,7 @@ export function startWallpaper(canvas) {
     u.uPat && gl.uniform1i(u.uPat, 0); u.uRamp && gl.uniform1i(u.uRamp, 1);
     return { p, u };
   };
-  const P = { sky: prog(SKY), hill: prog(HILL), tree: prog(TREE), leaf: prog(LEAF), bird: prog(BIRD), grass: prog(GRASS), mote: prog(MOTE) };
+  const P = { sky: prog(P_SKY), hall: prog(P_HALL), tree: prog(P_TREE), leaf: prog(P_LEAF), bird: prog(P_BIRD), mote: prog(P_MOTE) };
   makePattern(gl);
 
   const G = {}; // gemeinsame Uniforms (Name -> Zahl oder Vektor)
@@ -197,9 +213,17 @@ export function startWallpaper(canvas) {
   };
   const drawInst = (g, count = g.count) => { if (!count) return; gl.bindVertexArray(g.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count); };
 
-  // Szene aufbauen; weniger Laub auf kleinen Bildschirmen
+  const hallData = hallMesh();
+  const hallVao = gl.createVertexArray(), hallBuf = gl.createBuffer();
+  gl.bindVertexArray(hallVao); gl.bindBuffer(gl.ARRAY_BUFFER, hallBuf); gl.bufferData(gl.ARRAY_BUFFER, hallData, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 28, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 28, 24);
+  gl.bindVertexArray(null);
+
+  // weniger Laub auf kleinen Bildschirmen
   const small = S.small || innerWidth * innerHeight < 700 * 500;
-  const tree = buildTree(2026, small ? 0.55 : 1);
+  const tree = buildTree(2026, small ? 0.45 : 0.75);
   const mesh = ribbonMesh(tree.ribbons);
   const treeVao = gl.createVertexArray(), treeBuf = gl.createBuffer(), treeIdx = gl.createBuffer();
   gl.bindVertexArray(treeVao);
@@ -212,37 +236,8 @@ export function startWallpaper(canvas) {
 
   const leaves = instanced(new Float32Array(tree.clumps.flatMap((c) => [c.x, c.y, c.z, c.s, c.flex, c.ph, c.ao, c.hue])));
 
-  const strip = (data) => {
-    const vao = gl.createVertexArray(), buf = gl.createBuffer();
-    gl.bindVertexArray(vao); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 16, 0); gl.bindVertexArray(null);
-    return { vao, n: data.length / 4 };
-  };
-  // Ebenen von hinten nach vorn: Kamm, Hügel, Wiese hinter dem Baum, Boden vor dem Stamm
-  const HILLS = [
-    { g: strip(hillStrip(16, -0.05, 0.22, 0.5, 0.02, 3)), base: [0.20, 0.29, 0.38], base2: [0.27, 0.35, 0.41], detail: 0.6 },
-    { g: strip(hillStrip(10, -0.26, 0.26, 0.45, 0.07, 11)), base: [0.09, 0.21, 0.17], base2: [0.14, 0.28, 0.18], detail: 0.9 },
-    { g: strip(hillStrip(5.5, -0.46, 0.2, 0.55, 0.04, 23)), base: [0.08, 0.19, 0.10], base2: [0.17, 0.31, 0.12], detail: 1.2 },
-    { g: strip(hillStrip(1.8, -0.58, 0.14, 0.6, 0.0, 31)), base: [0.10, 0.25, 0.08], base2: [0.21, 0.40, 0.12], detail: 1.6 },
-    { g: strip(hillStrip(0.45, -0.82, 0.07, 0.8, 0.0, 41)), base: [0.06, 0.15, 0.05], base2: [0.13, 0.27, 0.08], detail: 2.0, front: true },
-  ];
-  const grassData = [];
-  const gr = rng(77);
-  const blades = (n, z, y0, y1, h0, h1, wid, tilt, dark) => {
-    const f = HD0 / (HD0 + z);
-    for (let i = 0; i < n; i++) {
-      const xs = (gr() * 2 - 1) * 3.4, x = xs / f;
-      grassData.push(x, y0 + gr() * (y1 - y0), z, h0 + gr() * (h1 - h0), gr() * 6.283, (gr() - 0.5) * tilt, wid * (0.7 + gr() * 0.6), dark * (0.6 + gr() * 0.6));
-    }
-  };
-  const nb = small ? 0.6 : 1;
-  blades(Math.round(160 * nb), 1.7, -0.6, -0.56, 0.1, 0.2, 0.14, 0.5, 0.9);
-  blades(Math.round(260 * nb), 0.4, -0.84, -0.8, 0.18, 0.34, 0.15, 0.7, 0.9);
-  blades(Math.round(150 * nb), -0.55, -1.02, -0.98, 0.3, 0.6, 0.17, 0.8, 0.6);
-  const grass = instanced(new Float32Array(grassData));
-
   const moteData = [], mr = rng(5);
-  for (let i = 0; i < (small ? 40 : 90); i++) moteData.push((mr() * 2 - 1) * 2.6, mr() * 2.2 - 0.9, mr() * 4 + 0.3, 0.008 + mr() * 0.014, i % 3 ? 0 : 1, mr(), 0.5 + mr(), 0.15 + mr() * 0.3);
+  for (let i = 0; i < (small ? 40 : 90); i++) moteData.push((mr() * 2 - 1) * 3, mr() * 4 - 1.6, 3 + mr() * 4.6, 0.012 + mr() * 0.014, i % 3 ? 0 : 1, mr(), 0.5 + mr(), 0.2 + mr() * 0.4);
   const motes = instanced(new Float32Array(moteData));
 
   // ---------- Vögel ----------
@@ -250,42 +245,41 @@ export function startWallpaper(canvas) {
   const birdBuf = instanced(birdData, true);
   const br = rng(404);
   const perchTaken = new Set();
-  tree.perches.forEach((p, i) => { birds.push({ mode: "perch", perch: i, x: p.x, y: p.y, z: p.z, size: 0.095 + br() * 0.02, dir: br() < 0.5 ? -1 : 1, kind: [0, 2, 3, 0][i % 4], ph: br() * 6.28, look: 3 + br() * 8 }); perchTaken.add(i); });
-  for (let i = 0; i < 6; i++) birds.push({ mode: "orbit", cx: br() * 1.2 - 0.6, cy: 0.7 + br() * 0.5, rx: 1.4 + br() * 1.4, ry: 0.15 + br() * 0.3, z: 3 + br() * 4, w: (0.1 + br() * 0.08) * (i % 2 ? 1 : -1), ph0: br() * 6.28, size: 0.05 + br() * 0.02, kind: 1, ph: br() * 6.28, glide: br() });
+  tree.perches.forEach((p, i) => { birds.push({ mode: "perch", perch: i, x: p.x, y: p.y, z: p.z, size: 0.2 + br() * 0.04, dir: br() < 0.5 ? -1 : 1, kind: [0, 2, 3, 0][i % 4], ph: br() * 6.28, look: 3 + br() * 8 }); perchTaken.add(i); });
+  for (let i = 0; i < 6; i++) birds.push({ mode: "orbit", cx: br() * 1.6 - 0.8, cy: 1.2 + br() * 0.8, rx: 2.7 + br() * 1.2, ry: 0.35 + br() * 0.5, z: 4.8 + br() * 2.6, w: (0.1 + br() * 0.08) * (i % 2 ? 1 : -1), ph0: br() * 6.28, size: 0.09 + br() * 0.04, kind: 1, ph: br() * 6.28, glide: br() });
   let flyby = null, nextFlyby = 20, nextTakeoff = 6;
   const catmull = (p0, p1, p2, p3, t) => { const t2 = t * t, t3 = t2 * t; return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3); };
-  const route = (pts, u) => { const n = pts.length - 3, f = clamp(u, 0, 0.9999) * n, i = Math.floor(f), t = f - i; return pts.slice(i, i + 4).length === 4 ? [0, 1, 2].map((k) => catmull(pts[i][k], pts[i + 1][k], pts[i + 2][k], pts[i + 3][k], t)) : pts[pts.length - 2]; };
+  const route = (pts, u) => { const n = pts.length - 3, f = clamp(u, 0, 0.9999) * n, i = Math.floor(f), t = f - i; return [0, 1, 2].map((k) => catmull(pts[i][k], pts[i + 1][k], pts[i + 2][k], pts[i + 3][k], t)); };
 
   function updateBirds(dt, time, dayF) {
-    // ein sitzender Vogel fliegt ab: über die Krone, dann zu einer freien Sitzstange
+    // ein sitzender Vogel fliegt ab: durch die Krone und die Halle, dann zu einer freien Sitzstange
     if ((nextTakeoff -= dt) < 0) {
       nextTakeoff = 16 + br() * 20;
       const cand = birds.filter((b) => b.mode === "perch");
       if (dayF > 0.5 && cand.length) {
         const b = cand[Math.floor(br() * cand.length)];
         const free = tree.perches.map((_, i) => i).filter((i) => !perchTaken.has(i) || i === b.perch);
-        const to = tree.perches[free[Math.floor(br() * free.length)]], from = { x: b.x, y: b.y, z: b.z };
-        const s = br() < 0.5 ? -1 : 1, up = (x, y, z) => [x, y, z];
-        perchTaken.delete(b.perch);
-        b.mode = "fly"; b.t = 0; b.dur = 11 + br() * 6; b.target = free.find((i) => tree.perches[i] === to); perchTaken.add(b.target);
-        b.route = [up(from.x - 0.3 * s, from.y - 0.1, from.z), up(from.x, from.y, from.z), up(from.x + 0.4 * s, from.y + 0.5, from.z - 0.3), up(s * (0.7 + br() * 1.3), 0.5 + br() * 0.8, 0.3 + br() * 1.2), up(-s * (0.7 + br() * 1.5), 0.2 + br() * 0.9, -0.2 + br() * 1.5), up(to.x - (to.x > 0 ? 0.5 : -0.5), to.y + 0.35, to.z), up(to.x, to.y, to.z), up(to.x, to.y, to.z)];
+        const target = free[Math.floor(br() * free.length)], to = tree.perches[target], s = br() < 0.5 ? -1 : 1;
+        perchTaken.delete(b.perch); perchTaken.add(target);
+        b.mode = "fly"; b.t = 0; b.dur = 11 + br() * 6; b.target = target;
+        b.route = [[b.x - 0.5 * s, b.y - 0.2, b.z], [b.x, b.y, b.z], [b.x + 0.8 * s, b.y + 1, b.z - 0.4], [s * (1.6 + br() * 1.8), 0.6 + br() * 1.8, ZT + (br() - 0.5) * 2.4], [-s * (1.6 + br() * 1.8), 0.2 + br() * 1.8, ZT + (br() - 0.5) * 2.4],
+          [to.x - Math.sign(to.x || 1) * 0.9, to.y + 0.7, to.z], [to.x, to.y, to.z], [to.x, to.y, to.z]];
       }
     }
-    if ((nextFlyby -= dt) < 0) { nextFlyby = 35 + br() * 35; if (dayF > 0.5) { const s = br() < 0.5 ? -1 : 1; flyby = { t: 0, dur: 8 + br() * 3, s, y: 0.1 + br() * 0.7, z: -0.35 + br() * 0.4, size: 0.1 + br() * 0.03, ph: 0 }; } }
+    if ((nextFlyby -= dt) < 0) { nextFlyby = 35 + br() * 35; if (dayF > 0.5) { const s = br() < 0.5 ? -1 : 1; flyby = { t: 0, dur: 8 + br() * 3, s, y: br() * 1.4, z: 2.2 + br(), size: 0.26 + br() * 0.08, ph: 0 }; } }
     let n = 0;
     const put = (x, y, z, size, ph, dir, mode, kind) => { if (n >= MAXB) return; birdData.set([x, y, z, size, ph, dir, mode, kind], n * 8); n++; };
     for (const b of birds) {
-      b.ph += dt * (b.mode === "perch" ? 0 : 1);
       if (b.mode === "perch") {
         b.look -= dt; if (b.look < 0) { b.look = 4 + br() * 9; b.dir = -b.dir; }
-        put(b.x, b.y + Math.sin(time * 1.4 + b.ph) * 0.002, b.z, b.size, 0, b.dir, 1, b.kind);
+        put(b.x, b.y + Math.sin(time * 1.4 + b.ph) * 0.005, b.z, b.size, 0, b.dir, 1, b.kind);
       } else if (b.mode === "fly") {
         b.t += dt / b.dur;
         const u = b.t, e = mix(u, u * u * (3 - 2 * u), 0.6);
         const [x, y, z] = route(b.route, e), [x2] = route(b.route, Math.min(1, e + 0.01));
         const slow = u < 0.07 || u > 0.9, rate = slow ? 17 : 11 + 5 * Math.sin(time * 0.7 + b.ph);
         b.fp = (b.fp || 0) + dt * rate;
-        if (u >= 1) { b.mode = "perch"; b.perch = b.target; const p = tree.perches[b.perch]; Object.assign(b, { x: p.x, y: p.y, z: p.z, look: 4, dir: x2 >= x ? 1 : -1 }); perchTaken.add(b.perch); put(b.x, b.y, b.z, b.size, 0, b.dir, 1, b.kind); }
+        if (u >= 1) { b.mode = "perch"; b.perch = b.target; const p = tree.perches[b.perch]; Object.assign(b, { x: p.x, y: p.y, z: p.z, look: 4, dir: x2 >= x ? 1 : -1 }); put(b.x, b.y, b.z, b.size, 0, b.dir, 1, b.kind); }
         else put(x, y, z, b.size * (slow ? 1.05 : 1), b.fp, x2 >= x ? 1 : -1, 0, b.kind);
       } else if (b.mode === "orbit" && dayF > 0.2) {
         const a = b.ph0 + time * b.w, glide = Math.sin(time * 0.3 + b.glide * 9) > 0.35;
@@ -296,7 +290,7 @@ export function startWallpaper(canvas) {
     if (flyby) {
       flyby.t += dt / flyby.dur;
       if (flyby.t >= 1) flyby = null;
-      else { const u = flyby.t, x = flyby.s * mix(-3.2, 3.2, u), y = flyby.y + Math.sin(u * 6) * 0.12; flyby.ph += dt * 12; put(-x, y, flyby.z, flyby.size, flyby.ph, -flyby.s, 0, 1); }
+      else { const u = flyby.t, x = flyby.s * mix(-5, 5, u), y = flyby.y + Math.sin(u * 6) * 0.2; flyby.ph += dt * 12; put(-x, y, flyby.z, flyby.size, flyby.ph, -flyby.s, 0, 1); }
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, birdBuf.buf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, birdData, 0, n * 8);
     return n;
@@ -339,11 +333,18 @@ export function startWallpaper(canvas) {
     const dayF = smooth(-8, 4, Lt.el);
     const nB = updateBirds(dt, time, dayF);
 
+    // Licht: aus der Richtung von Sonne/Mond, aber zum Oberlicht hin aufgerichtet, damit die Strahlen schräg durch die Halle fallen
+    const kd = Lt.keyDir, lx = kd[0] * 0.9, ly = 0.55 + 0.45 * Math.max(kd[1], 0), lz = kd[2] * 0.25 - 0.05, ll = Math.hypot(lx, ly, lz);
+    const day = smooth(-6, 14, Lt.el);
+    const amb = mixv([0.07, 0.09, 0.17], mixv([0.86, 0.80, 0.68], Lt.hor, 0.22), day).map((v) => v * mix(0.5, 0.95, day)); // warmes Hauslicht
+    const proj = (x, y, z) => { const f = hd / (hd + z); return [head[0] * (1 - f) + x * sc * f, head[1] * (1 - f) + ((y + 0.9) * sc - 0.9) * f]; };
     const dpr = H / innerHeight;
     Object.assign(G, {
-      uA: A, uHd: hd, uSc: sc, uTime: time, uWind: st.paused ? 0 : st.wind * (0.85 + 0.3 * Math.sin(time * 0.05)), uPpu0: H / 2, uHead: head,
-      uDotPx: (S.small ? 3 : Math.max(2.4, 4.4 * S.k)) * dpr, uSizeVar: 0.55, uContrast: 1, uLevels: 5, uExp: 0.95,
-      uAmb: Lt.amb, uKey: Lt.key, uL: Lt.keyDir, uFog: Lt.fog, uSunScr: [Lt.sunScr[0] + head[0] * 0.9, Lt.sunScr[1] + head[1] * 0.9], uSunI: Lt.sunI,
+      uA: A, uHd: hd, uSc: sc, uTime: time, uWind: st.paused ? 0 : st.wind * (0.85 + 0.3 * Math.sin(time * 0.05)), uPpu0: H / 2, uHead: head, uFogK: 0.35,
+      uDotPx: (S.small ? 3 : Math.max(2.4, 4.4 * S.k)) * dpr, uSizeVar: 0.55, uContrast: 1, uLevels: 5, uExp: 1.0,
+      uLh: [lx / ll, ly / ll, lz / ll], uSky: SKYLIGHT, uCrown: CROWN,
+      uAmb: amb, uKey: Lt.key, uFog: amb.map((v) => v * 1.2), uLightScr: proj(SKYLIGHT[0], YC, SKYLIGHT[1]), uLightI: Math.min(1.4, Math.max(...Lt.key)),
+      uSunScr: [Lt.sunScr[0] + head[0] * 0.9, Lt.sunScr[1] + head[1] * 0.9], uSunI: Lt.sunI,
       uZen: Lt.zen, uHor: Lt.hor, uSunCol: Lt.sunCol, uMoonLit: Lt.moonLit, uMoonScr: [Lt.moonScr[0] + head[0] * 0.9, Lt.moonScr[1] + head[1] * 0.9], uMoonI: Lt.moonI, uStars: Lt.stars, uClouds: Lt.clouds,
     });
 
@@ -351,25 +352,19 @@ export function startWallpaper(canvas) {
     gl.clearColor(0, 0, 0, 1); gl.clearDepth(1);
     gl.depthMask(true); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST); use(P.sky); gl.bindVertexArray(null); gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
 
-    gl.disable(gl.DEPTH_TEST); use(P.sky); gl.bindVertexArray(null); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.enable(gl.DEPTH_TEST);
-
-    use(P.hill);
-    for (const h of HILLS.filter((x) => !x.front).slice(0, 4)) { gl.uniform3fv(P.hill.u.uBase, h.base); gl.uniform3fv(P.hill.u.uBase2, h.base2); gl.uniform1f(P.hill.u.uDetail, h.detail); gl.bindVertexArray(h.g.vao); gl.drawArrays(gl.TRIANGLE_STRIP, 0, h.g.n); }
+    use(P.hall); gl.bindVertexArray(hallVao); gl.drawArrays(gl.TRIANGLES, 0, hallData.length / 7);
     use(P.tree); gl.bindVertexArray(treeVao); gl.drawElements(gl.TRIANGLES, mesh.idx.length, gl.UNSIGNED_INT, 0);
     use(P.leaf); drawInst(leaves);
     use(P.bird); drawInst(birdBuf, nB);
-    use(P.hill);
-    for (const h of HILLS.filter((x) => x.front)) { gl.uniform3fv(P.hill.u.uBase, h.base); gl.uniform3fv(P.hill.u.uBase2, h.base2); gl.uniform1f(P.hill.u.uDetail, h.detail); gl.bindVertexArray(h.g.vao); gl.drawArrays(gl.TRIANGLE_STRIP, 0, h.g.n); }
-    use(P.grass); drawInst(grass);
     use(P.mote); drawInst(motes);
     gl.bindVertexArray(null);
   }
 
   // Schleife mit Leistungsanpassung; ruht, wenn der Tab verdeckt ist
-  let ft = 16, slow = 0, fpsN = 0, fpsT = performance.now(), fps = 0;
-  let flip = false;
+  let ft = 16, slow = 0, fpsN = 0, fpsT = performance.now(), fps = 0, flip = false;
   function loop(now) {
     raf = 0;
     // ohne Kopf- oder Mausbewegung genügt die halbe Bildrate (Wind und Vögel sind langsam)
@@ -388,17 +383,15 @@ export function startWallpaper(canvas) {
   addEventListener("pointermove", kick, { passive: true });
   kick();
 
-  const api = {
+  return {
     canvas, Kopf,
     get paused() { return st.paused; }, get mode() { return st.mode; }, get wind() { return st.wind; }, get depth() { return st.depth; },
-    get fps() { return fps; }, get quality() { return st.quality; }, get light() { return lastLight; },
+    get fps() { return fps; }, get quality() { return st.quality; }, get light() { return lastLight; }, get birds() { return birds; },
     setPaused(b) { st.paused = b; b ? drawOnce() : kick(); },
     setCovered(b) { if (st.covered !== b) { st.covered = b; if (!b) kick(); } }, // ein maximiertes Fenster verdeckt alles: nicht rechnen
     setMode(m) { st.mode = m; simAt = performance.now(); drawOnce(); kick(); },
     setWind(v) { st.wind = v; drawOnce(); },
     setDepth(v) { st.depth = v; drawOnce(); },
-    get birds() { return birds; },
     step(dt = 1 / 60) { time += dt; frame(dt); }, // zum Testen
   };
-  return api;
 }
