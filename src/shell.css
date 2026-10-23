@@ -64,6 +64,8 @@ body.booting .wallpaper i { animation-play-state: paused; }
 
 #desktop { position: fixed; inset: 0; overflow: hidden; background: var(--wp-base); user-select: none; --vw: 1vw; --vh: 1vh; --vmax: max(var(--vw), var(--vh)); }
 .wallpaper { position: absolute; inset: 0; background: var(--wp); overflow: hidden; }
+.wallpaper canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.wallpaper.gl i, .wallpaper.gl::after { display: none; } /* mit WebGL-Hintergrund entfallen die Farbflecken und das Rauschen */
 .wallpaper::after { content: ""; position: absolute; inset: 0; opacity: 0.07; mix-blend-mode: overlay; pointer-events: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 .wallpaper i { position: absolute; width: calc(46 * var(--vmax)); height: calc(46 * var(--vmax)); border-radius: 50%; filter: blur(80px); opacity: 0.35; will-change: transform; }

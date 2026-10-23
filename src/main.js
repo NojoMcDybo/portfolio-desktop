@@ -123,6 +123,27 @@ bar.addEventListener("pointermove", (e) => {
 });
 bar.addEventListener("pointerleave", () => items.forEach((b) => { b._sv.s.set(1); b._sv.o.set(0); }));
 
+// ---------- Hintergrund: Baum in Dithering (WebGL), Himmel nach Uhrzeit, Blick folgt Kopf oder Maus ----------
+let wp = null;
+{
+  const q = new URLSearchParams(location.search);
+  if (q.get("wp") !== "off") {
+    import("./wallpaper.js")
+      .then((mod) => {
+        wp = mod.startWallpaper(document.getElementById("wp-canvas"));
+        document.querySelector(".wallpaper").classList.add("gl");
+        if (q.has("debug")) window.__wp = wp;
+        setInterval(() => wp.setCovered(wm.all().some((w) => !w.min && (w.max || S.small))), 500);
+        wp.Kopf.onCamera((s, detail) => {
+          if (detail) toast(detail);
+          else if (s === "lädt") toast("Die Kamera wird nur hier im Browser ausgewertet – nichts wird gesendet.");
+          else if (s === "aktiv") toast("Kopf erkannt: der Hintergrund folgt deinem Blick.");
+        });
+      })
+      .catch((e) => { console.warn("Hintergrund: Ersatzbild", e); document.getElementById("wp-canvas")?.remove(); });
+  }
+}
+
 // ---------- Desktop-Symbole ----------
 const ICONS = [
   { name: "Willkommen", glyph: I.hello, hue: 215, open: openWelcome },
@@ -209,6 +230,24 @@ document.querySelector('[data-menu="hilfe"]').addEventListener("click", (e) =>
     { label: "Willkommen öffnen", fn: openWelcome },
   ]));
 
+const TIMES = [["live", "Live (nach der Uhr)"], ["morgen", "Morgen"], ["mittag", "Mittag"], ["abend", "Abend"], ["daemmerung", "Dämmerung"], ["nacht", "Nacht"], ["zeitraffer", "Ein Tag im Zeitraffer"]];
+const WINDS = [[0.35, "sanft"], [1, "normal"], [1.8, "stürmisch"]], DEPTHS = [[0.5, "wenig"], [1, "normal"], [1.6, "stark"]];
+const nextOf = (list, v) => list[(list.findIndex(([x]) => x === v) + 1) % list.length][0];
+const nameOf = (list, v) => list.find(([x]) => x === v)?.[1] ?? "";
+document.querySelector('[data-menu="hintergrund"]').addEventListener("click", (e) => {
+  if (!wp) return menubarMenu(e.currentTarget, [{ label: "Der Hintergrund lädt noch oder wird hier nicht unterstützt", dis: true }]);
+  const cam = wp.Kopf.state.camera, camOn = ["fragt", "lädt", "sucht", "aktiv"].includes(cam);
+  menubarMenu(e.currentTarget, [
+    { label: camOn ? "Kopf folgen beenden" : "Kopf folgen (Webcam)", hint: camOn ? { fragt: "fragt …", lädt: "lädt …", sucht: "sucht Gesicht …", aktiv: "aktiv" }[cam] : "", fn: () => (camOn ? wp.Kopf.stopCamera() : wp.Kopf.startCamera()) },
+    { label: wp.paused ? "Bewegung fortsetzen" : "Bewegung anhalten", fn: () => wp.setPaused(!wp.paused) },
+    { sep: true },
+    ...TIMES.map(([id, label]) => ({ label, hint: wp.mode === id ? "✓" : "", fn: () => wp.setMode(id) })),
+    { sep: true },
+    { label: "Wind", hint: nameOf(WINDS, wp.wind), fn: () => wp.setWind(nextOf(WINDS, wp.wind)) },
+    { label: "Tiefe", hint: nameOf(DEPTHS, wp.depth), fn: () => wp.setDepth(nextOf(DEPTHS, wp.depth)) },
+  ]);
+});
+
 const clock = $("#mb-clock");
 const tick = () => { clock.textContent = new Date().toLocaleString("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
 tick(); setInterval(tick, 15000);
@@ -258,6 +297,7 @@ runIntro({ skip }).then(() => {
   setTimeout(() => notch.show(), 250);
   setTimeout(() => {
     const first = params.get("open");
+    if (first === "none") return;
     if (first) { const a = byId(first); a ? openApp(a) : first === "learn" ? openLearn() : first === "nebel" ? openNebel() : openWelcome(); }
     else openWelcome();
   }, 1100);

@@ -18,13 +18,14 @@
 <body class="booting">
   <!-- Der Desktop liegt fertig und gerade da; das Intro-Glas darüber löst sich auf, wenn man den Balken hochzieht -->
   <div id="desktop" aria-hidden="true">
-    <div class="wallpaper" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="wallpaper" aria-hidden="true"><canvas id="wp-canvas"></canvas><i></i><i></i><i></i></div>
 
     <header id="menubar">
       <div class="mb-left">
         <button class="mb-item mb-logo" id="mb-logo" aria-label="Nojo-Menü" aria-haspopup="menu"><span>N</span></button>
         <span class="mb-app" id="mb-app">Desktop</span>
         <button class="mb-item" data-menu="fenster" aria-haspopup="menu">Fenster</button>
+        <button class="mb-item" data-menu="hintergrund" aria-haspopup="menu">Hintergrund</button>
         <button class="mb-item" data-menu="hilfe" aria-haspopup="menu">Hilfe</button>
       </div>
       <div class="mb-right">
