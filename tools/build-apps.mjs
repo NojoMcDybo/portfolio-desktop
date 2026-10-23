@@ -13,7 +13,7 @@ const DEV = process.env.DEV_ROOT || "D:/Dev";
 // html: Seite im Repo; shim: braucht die Tauri-Attrappe; extra: weitere Skripte vor dem Programm
 const APPS = {
   streamdock: { src: "streamdock", shim: true },
-  arena: { src: "arena", shim: true },
+  arena: { src: "arena", shim: true, extra: ["soccer-world"] }, // soccer-world: gemeinsame Spielwelt mit der Notch
   kursbuch: { src: "kursbuch", shim: true },
   // Notch: echte Oberfläche (Notch selbst = index.html, Einstellungen = settings.html); die schwere Wake-Word-Laufzeit entfällt
   notch: { src: "notch", shim: true, pages: ["index.html", "settings.html"], prune: /ort-wasm|\.onnx$/, dropDirs: ["wakeword"] },
@@ -34,7 +34,8 @@ for (const id of list) {
   for (const d of a.dropDirs ?? []) rmSync(`${out}/${d}`, { recursive: true, force: true });
   if (a.prune) for (const f of readdirSync(`${out}/assets`)) if (a.prune.test(f)) { rmSync(`${out}/assets/${f}`); console.log("  entfernt:", f); }
   if (a.shim) {
-    const tags = `<script src="../../shim/tauri-shim.js"></script>\n    <script src="../../shim/app-${id}.js"></script>\n    `;
+    const extra = (a.extra ?? []).map((x) => `<script src="../../shim/${x}.js"></script>\n    `).join("");
+    const tags = `<script src="../../shim/tauri-shim.js"></script>\n    ${extra}<script src="../../shim/app-${id}.js"></script>\n    `;
     if (!existsSync(`${root}/shim/app-${id}.js`)) console.warn(`  (Hinweis: shim/app-${id}.js fehlt noch)`);
     for (const page of a.pages ?? ["index.html"]) {
       const html = `${out}/${page}`;

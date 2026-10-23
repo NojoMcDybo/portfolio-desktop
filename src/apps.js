@@ -131,7 +131,7 @@ export const APPS = [
 
 // Lernseiten laufen schon auf GitHub Pages: das Fenster zeigt die echte Seite, nichts ist nachgebaut.
 export const LEARN = [
-  { id: "trainingswissenschaften", name: "Trainingswissenschaften", sub: "Klausur-Trainer · 16 Module, 779 Lernkarten, 584 Prüfungsfragen", hue: 205 },
+  { id: "trainingswissenschaften", name: "Trainingswissenschaften", sub: "Klausur-Trainer · 16 Module, 779 Lernkarten, 584 Prüfungsfragen", hue: 205, icon: "assets/icons/trainingswissenschaften.png" },
   { id: "LitCultLingu", name: "LitCult & Linguistik", sub: "Study Coach · Literary and Cultural Studies, Linguistics", hue: 330 },
   { id: "Sportpsychologie", name: "Sportpsychologie", sub: "MAP-3-Trainer", hue: 160 },
   { id: "Ringvorlesung_Inklusion", name: "Inklusion im Sport", sub: "Klausur-Trainer zur Ringvorlesung", hue: 28 },

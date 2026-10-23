@@ -3,6 +3,7 @@
 // Modul der Oberfläche als „hover“-Ereignis (in der echten App fragt Rust dafür die Mausposition ab).
 import { createNotchBackend } from "./notch-backend.js";
 import { animate } from "./motion.js";
+import { S } from "./stage.js";
 
 export function createNotchHost({ toast, openSettings }) {
   const backend = createNotchBackend({ toast });
@@ -26,7 +27,8 @@ export function createNotchHost({ toast, openSettings }) {
   fit();
   addEventListener("resize", fit);
   const inside = (x, y) => { const r = backend.hit; return r.w > 0 && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h; };
-  const insideP = (x, y) => inside(x / k, y / k); // Zeigerpositionen des Desktops in die Koordinaten der Notch-Oberfläche
+  const f = () => k * S.k; // Fensterpixel -> Pixel der Notch-Oberfläche (Bühne und ggf. verkleinerter iframe)
+  const insideP = (x, y) => inside(x / f(), y / f()); // Zeigerpositionen des Fensters in die Koordinaten der Notch-Oberfläche
   let dockDrag = null, touchOn = false;
   const set = (v) => { backend.setHover(v); frame.style.pointerEvents = v ? "auto" : "none"; };
 
@@ -61,8 +63,8 @@ export function createNotchHost({ toast, openSettings }) {
     e.preventDefault();
     clearTimeout(leaveT);
     leaveT = setTimeout(() => { if (over) { over = false; backend.emit("drag", { phase: "leave" }); } }, 250);
-    if (!over) { over = true; backend.emit("drag", { phase: "enter", x: e.clientX / k, y: e.clientY / k }); }
-    else backend.emit("drag", { phase: "over", x: e.clientX / k, y: e.clientY / k });
+    if (!over) { over = true; backend.emit("drag", { phase: "enter", x: e.clientX / f(), y: e.clientY / f() }); }
+    else backend.emit("drag", { phase: "over", x: e.clientX / f(), y: e.clientY / f() });
   });
   addEventListener("drop", (e) => {
     if (!hasFiles(e)) return;
@@ -72,7 +74,7 @@ export function createNotchHost({ toast, openSettings }) {
     if (!insideP(e.clientX, e.clientY)) return backend.emit("drag", { phase: "leave" });
     const paths = [];
     for (const f of e.dataTransfer.files) { backend.files.set(f.name, f); paths.push(f.name); }
-    backend.emit("drag", { phase: "drop", paths, x: e.clientX / k, y: e.clientY / k });
+    backend.emit("drag", { phase: "drop", paths, x: e.clientX / f(), y: e.clientY / f() });
   });
 
   return {

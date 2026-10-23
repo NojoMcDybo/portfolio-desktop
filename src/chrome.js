@@ -105,7 +105,9 @@ export function buildLearn(body, openSite) {
     openSite(all.find((s) => s.id === c.dataset.site));
   });
 }
-const card = (s) => `<button class="lcard" type="button" data-site="${esc(s.id)}"><div class="lt" style="${tile(s.hue)}">${esc(s.name.replace(/[^A-Za-zÄÖÜäöü]/g, "").slice(0, 2).toUpperCase())}</div><div><b>${esc(s.name)}</b><span>${esc(s.sub)}</span>${s.note ? `<i>${esc(s.note)}</i>` : ""}</div></button>`;
+// Seiten mit eigenem Symbol (icon) zeigen es; die übrigen bekommen eine Kachel mit Kürzel
+const lt = (s) => (s.icon ? `<div class="lt"><img src="${esc(s.icon)}" alt="" draggable="false" style="width:100%;height:100%;border-radius:inherit;display:block"></div>` : `<div class="lt" style="${tile(s.hue)}">${esc(s.name.replace(/[^A-Za-zÄÖÜäöü]/g, "").slice(0, 2).toUpperCase())}</div>`);
+const card = (s) => `<button class="lcard" type="button" data-site="${esc(s.id)}">${lt(s)}<div><b>${esc(s.name)}</b><span>${esc(s.sub)}</span>${s.note ? `<i>${esc(s.note)}</i>` : ""}</div></button>`;
 
 /** Willkommen: kurze Einführung und alle Programme als Kacheln */
 export function buildWelcome(body, openApp, openLearn) {
@@ -126,7 +128,7 @@ export function buildWelcome(body, openApp, openLearn) {
     <style>
       .welcome{padding:34px 34px 30px;max-width:860px;margin:0 auto}
       .w-eye{margin:0 0 10px;font:650 11px var(--n-font);letter-spacing:.14em;text-transform:uppercase;color:var(--n-accent)}
-      .w-hero h1{margin:0 0 12px;font:700 clamp(30px,5vw,44px)/1.05 var(--n-font-display);letter-spacing:-.02em}
+      .w-hero h1{margin:0 0 12px;font:700 clamp(30px,calc(var(--vw)*5),44px)/1.05 var(--n-font-display);letter-spacing:-.02em}
       .w-lead{margin:0 0 26px;max-width:58ch;color:var(--n-dim);font-size:15px;line-height:1.6}
       .w-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
       .w-app{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:center;text-align:left;padding:14px;border-radius:18px;background:var(--n-surface);box-shadow:inset 0 0 0 1px var(--n-line);transition:background .2s}

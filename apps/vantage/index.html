@@ -1,32 +1,74 @@
 <!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Vantage</title>
-  <link rel="stylesheet" href="../../src/nojo-ui.css">
-  <link rel="stylesheet" href="vantage.css">
-  <script src="../../shim/tauri-shim.js"></script>
-  <script defer src="../../vendor/motion-13.5.0.js"></script>
-  <script type="module" src="vantage.js"></script>
-</head>
-<body class="n-window">
-  <div class="fog" aria-hidden="true"><i></i><i></i></div>
-  <header class="top" data-tauri-drag-region>
-    <div class="brand" data-tauri-drag-region><span class="brand-v">V</span>antage</div>
-    <nav class="tabs n-seg n-glass" id="tabs" role="tablist" aria-label="Bereich">
-      <button role="tab" class="active" data-view="pro">Pro</button>
-      <button role="tab" data-view="me">Ich</button>
-      <button role="tab" data-view="studio">Studio</button>
-    </nav>
-    <div class="top-right" data-tauri-drag-region>
-      <button class="n-ico sm n-glass" id="gear" title="Einstellungen" aria-label="Einstellungen" aria-haspopup="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-      </button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vantage</title>
+    <link rel="stylesheet" href="../../src/nojo-ui.css" />
+    <link rel="stylesheet" href="vantage.css" />
+    <script src="../../shim/tauri-shim.js"></script>
+    <script type="module" src="main.js"></script>
+  </head>
+  <body class="n-window">
+    <!-- rahmenloses Fenster: Kopf zum Ziehen (Marke | Bereiche | Werkzeuge), Reiter schweben als Liquid Glass -->
+    <header class="top" data-tauri-drag-region>
+      <div class="brand" data-tauri-drag-region><span class="brand-v">V</span>antage</div>
+      <nav class="tabs n-seg n-liquid panel" role="tablist" aria-label="Bereich">
+        <button role="tab" data-view="pro" class="active">Pro</button>
+        <button role="tab" data-view="me">Ich</button>
+        <button role="tab" data-view="studio">Studio</button>
+      </nav>
+      <div class="top-right" data-tauri-drag-region>
+        <button class="n-ico sm n-glass n-liquid gear" title="Einstellungen" aria-label="Einstellungen"></button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Pro: Profispiele (Live, Spielplan, Turnier, Teams) -->
+      <section class="view" data-view="pro">
+        <div class="subbar">
+          <div class="n-seg pro-sub" role="tablist" aria-label="Pro">
+            <button data-sub="live" class="active">Live</button>
+            <button data-sub="plan">Spielplan</button>
+            <button data-sub="cup">Turnier</button>
+            <button data-sub="teams">Teams</button>
+          </div>
+        </div>
+        <div class="sub" data-sub="live">
+          <div class="live-layout">
+            <div class="strip" aria-label="Serien"></div>
+            <div class="focus"></div>
+          </div>
+        </div>
+        <div class="sub" data-sub="plan" hidden><div class="plan"></div></div>
+        <div class="sub" data-sub="cup" hidden><div class="cup"></div></div>
+        <div class="sub" data-sub="teams" hidden>
+          <div class="teams-layout">
+            <aside class="teams-side n-card">
+              <input class="team-search n-input" type="search" placeholder="Team suchen" aria-label="Team suchen" />
+              <div class="ts-list"></div>
+            </aside>
+            <div class="teams-main"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ich: Konto, Spiele, Mastery, Notizen -->
+      <section class="view" data-view="me" hidden></section>
+
+      <!-- Studio: Aufnahme, Spiele, Clips -->
+      <section class="view" data-view="studio" hidden></section>
+    </main>
+
+    <!-- Seitenblatt (Einstellungen) -->
+    <div class="backdrop" hidden>
+      <aside class="sheet n-liquid panel" role="dialog" aria-modal="true">
+        <div class="sheet-head">
+          <h2 class="sheet-title"></h2>
+          <button class="n-ico sm sheet-x" title="Schließen (Esc)" aria-label="Schließen"></button>
+        </div>
+        <div class="sheet-body"></div>
+      </aside>
     </div>
-  </header>
-  <div class="pop n-glass" id="pop" hidden></div>
-  <main id="main"></main>
-  <div class="toast n-glass" id="toast" role="status" aria-live="polite"></div>
-</body>
+  </body>
 </html>

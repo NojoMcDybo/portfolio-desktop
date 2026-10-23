@@ -6,6 +6,7 @@ import { appFooter, siteFooter, buildLearn, buildWelcome } from "./chrome.js";
 import { createNotchHost } from "./notch-host.js";
 import { initStreamdock } from "./streamdock-demo.js";
 import { I } from "./icons.js";
+import { S } from "./stage.js";
 import { animate, stagger, springValue, lift, POP, SPRING } from "./motion.js";
 
 const $ = (s) => document.querySelector(s);
@@ -28,7 +29,7 @@ const notch = createNotchHost({
 function openApp(app) {
   return wm.open({
     // Programme mit eigener Fensterleiste (Tauri, rahmenlos) zeichnen sie selbst; Haze (Electron) bekommt hier eine
-    key: app.id, title: app.name, mode: app.bar ? "bar" : "app", pad: app.bar ? 80 : 40, icon: app.icon, src: app.page, size: app.size, min: [560, 420],
+    key: app.id, title: app.name, mode: app.bar ? "bar" : "app", pad: app.bar ? 80 : 40, icon: app.icon, src: app.page, size: app.size, min: [560, 420], noScale: app.id === "notch",
     bg: app.bg, footer: (w) => appFooter(app, w),
   });
 }
@@ -58,7 +59,7 @@ for (const d of DOCK) {
   b.type = "button";
   b.dataset.key = d.key;
   b.setAttribute("aria-label", d.name);
-  b.innerHTML = `<img src="${d.icon}" alt="" draggable="false"><span class="dk-label">${d.name}</span>`;
+  b.innerHTML = `<span class="dk-in"><img src="${d.icon}" alt="" draggable="false"></span><span class="dk-label">${d.name}</span>`;
   b.addEventListener("click", () => {
     const w = wm.get(d.key);
     if (!w) animate(b.querySelector("img"), { y: [0, -26, 0, -13, 0] }, { duration: 0.85, ease: "easeOut", times: [0, 0.32, 0.58, 0.8, 1] });
@@ -75,7 +76,7 @@ for (const d of DOCK) {
     if (d.app) m.push({ label: "Installer herunterladen", href: d.app.fallback.url }, ...(d.app.sourceRepo !== null ? [{ label: "Quellcode", href: `https://github.com/NojoMcDybo/${d.app.repo}` }] : []));
     const w = wm.get(d.key);
     if (w) m.push({ sep: true }, { label: "Schließen", fn: () => wm.close(w) });
-    menu(e.clientX, innerHeight - 90, m, true);
+    menu(e.clientX / S.k, S.h - 90, m, true);
   });
   // Beschriftung federt herein; Druck drückt das Symbol (nicht das Dock-Element selbst: das trägt die Vergrößerung)
   const lab = b.querySelector(".dk-label"), img = b.querySelector("img");
@@ -89,13 +90,15 @@ for (const d of DOCK) {
   for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => animate(img, { scale: 1 }, POP));
   // Vergrößerung: jedes Symbol folgt seinem Zielwert auf einer Feder (Größe und seitlicher Versatz, das Dock bleibt mittig)
   const sv = { s: springValue(1, { stiffness: 520, damping: 30, mass: 0.7 }), o: springValue(0, { stiffness: 520, damping: 30, mass: 0.7 }) };
-  const paint = () => { b.style.transform = `translateX(${sv.o.get()}px) scale(${sv.s.get()})`; };
+  // Nur das Symbol wächst (scale auf .dk-in, ohne will-change: so wird es in der vergrößerten Größe gezeichnet, nicht hochgezogen); Beschriftung und Punkt bleiben scharf
+  const inner = b.querySelector(".dk-in");
+  const paint = () => { const s = sv.s.get(); b.style.transform = `translateX(${sv.o.get()}px)`; inner.style.transform = `scale(${s})`; b.style.setProperty("--s", s); };
   sv.s.on("change", paint); sv.o.on("change", paint);
   b._sv = sv;
   items.set(d.key, b);
   bar.append(b);
 }
-wm.dockRect = (key) => items.get(dockKey(key))?.getBoundingClientRect() ?? null;
+wm.dockRect = (key) => { const r = items.get(dockKey(key))?.getBoundingClientRect(); return r ? { x: r.x / S.k, y: r.y / S.k, width: r.width / S.k, height: r.height / S.k } : null; };
 function paintDock() {
   const run = new Set(wm.all().map((w) => dockKey(w.key)));
   items.forEach((b, k) => b.classList.toggle("run", run.has(k)));
@@ -109,7 +112,7 @@ bar.addEventListener("pointermove", (e) => {
   if (!fine.matches) return;
   const list = [...items.values()];
   const w0 = 56 + 8;
-  const sc = list.map((b) => { const r = b.getBoundingClientRect(); const dist = Math.abs(e.clientX - (r.left + r.width / 2) + b._sv.o.get()); return 1 + 0.62 * Math.max(0, 1 - dist / 130) ** 2; });
+  const sc = list.map((b) => { const r = b.getBoundingClientRect(); const dist = Math.abs(e.clientX - (r.left + r.width / 2) + b._sv.o.get() * S.k) / S.k; return 1 + 0.62 * Math.max(0, 1 - dist / 130) ** 2; });
   const total = sc.reduce((a, s) => a + (s - 1) * w0, 0);
   let acc = 0;
   list.forEach((b, i) => {
@@ -124,14 +127,16 @@ bar.addEventListener("pointerleave", () => items.forEach((b) => { b._sv.s.set(1)
 const ICONS = [
   { name: "Willkommen", glyph: I.hello, hue: 215, open: openWelcome },
   { name: "Lernseiten", glyph: I.folder, hue: 28, open: openLearn },
-  { name: "Trainings-wissenschaften", glyph: "TW", hue: 205, open: () => openSite(LEARN[0]) },
+  { name: "Trainings-wissenschaften", icon: LEARN[0].icon, hue: 205, open: () => openSite(LEARN[0]) },
   { name: "LitCult & Linguistik", glyph: "LC", hue: 330, open: () => openSite(LEARN[1]) },
 ];
 const icons = $("#icons");
 for (const i of ICONS) {
   const b = h("button", "dicon");
   b.type = "button";
-  b.innerHTML = `<div class="di" style="background:linear-gradient(145deg,hsl(${i.hue} 70% 60%),hsl(${(i.hue + 40) % 360} 62% 34%));color:#fff;font:800 20px var(--n-font-display)">${i.glyph.startsWith("<") ? i.glyph.replace("<svg", '<svg width="28" height="28"') : i.glyph}</div><span>${i.name}</span>`;
+  b.innerHTML = i.icon
+    ? `<div class="di" style="background:none"><img src="${i.icon}" alt="" draggable="false" style="width:100%;height:100%;border-radius:inherit;display:block;pointer-events:none"></div><span>${i.name}</span>`
+    : `<div class="di" style="background:linear-gradient(145deg,hsl(${i.hue} 70% 60%),hsl(${(i.hue + 40) % 360} 62% 34%));color:#fff;font:800 20px var(--n-font-display)">${i.glyph.startsWith("<") ? i.glyph.replace("<svg", '<svg width="28" height="28"') : i.glyph}</div><span>${i.name}</span>`;
   b.addEventListener("click", i.open);
   icons.append(b);
 }
@@ -154,7 +159,7 @@ function menu(x, y, list, above = false) {
     menuEl.append(e);
   }
   menuEl.hidden = false;
-  menuEl.style.left = Math.min(x, innerWidth - 240) + "px";
+  menuEl.style.left = Math.min(x, S.w - 240) + "px";
   menuEl.style.top = "0px";
   const hgt = menuEl.offsetHeight;
   menuEl.style.top = (above ? Math.max(40, y - hgt) : y) + "px";
@@ -173,7 +178,7 @@ function menubarMenu(btn, list) {
   menuFor = btn;
   btn.setAttribute("aria-expanded", "true");
   const r = btn.getBoundingClientRect();
-  menu(r.left, r.bottom + 4, list);
+  menu(r.left / S.k, r.bottom / S.k + 4, list);
 }
 $("#mb-logo").addEventListener("click", (e) =>
   menubarMenu(e.currentTarget, [
@@ -226,7 +231,7 @@ function openFromApp(d, from) {
     return;
   }
   const base = from?.frame?.src || location.href;
-  const w = wm.open({ key: d.key, title: d.title, mode: "app", pad: 0, src: new URL(d.src, base).href, size: d.size || [900, 640], min: d.bare ? [200, 80] : [520, 380], bg: d.bare ? "transparent" : undefined });
+  const w = wm.open({ key: d.key, title: d.title, mode: "app", pad: 0, src: new URL(d.src, base).href, size: d.size || [900, 640], noScale: !!d.bare, min: d.bare ? [200, 80] : [520, 380], bg: d.bare ? "transparent" : undefined });
   if (d.bare) w.el.classList.add("bare");
   if (d.max) wm.toggleMax(w);
 }
@@ -255,6 +260,5 @@ runIntro({ skip }).then(() => {
     const first = params.get("open");
     if (first) { const a = byId(first); a ? openApp(a) : first === "learn" ? openLearn() : first === "nebel" ? openNebel() : openWelcome(); }
     else openWelcome();
-    if (!first) notch.alert({ title: "Willkommen", text: "Fahr mit der Maus über mich – ich zeige, was gerade läuft.", ms: 7000 });
   }, 1100);
 });

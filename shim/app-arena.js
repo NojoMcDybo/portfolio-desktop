@@ -42,12 +42,16 @@
   const squad = (k) => {
     const r = rng("squad" + k);
     const used = new Set();
-    return POS.map((pos, i) => {
+    const list = POS.map((pos, i) => {
       let n;
       do { n = `${FIRST[Math.floor(r() * FIRST.length)]} ${LAST[Math.floor(r() * LAST.length)]}`; } while (used.has(n));
       used.add(n);
       return { id: `${k}-${i}`, jersey: String([1, 2, 3, 4, 5, 6, 8, 10, 14, 9, 11, 7, 12, 15, 16, 19, 20, 21][i]), name: n, pos, pos_name: pos, age: 19 + Math.floor(r() * 16), nation: "Deutschland", flag: "", injury: i === 13 && k === FAV ? "Out" : "" };
     });
+    // Torschützen der Spielwelt (soccer-world.js) stehen auch im Kader: Sturm und Mittelfeld tragen deren Nachnamen
+    const sw = window.SoccerWorld.SQUAD[k];
+    if (sw) [9, 10, 11, 7, 8, 5].forEach((slot, j) => { list[slot].name = `${list[slot].name.split(" ")[0]} ${sw[j]}`; });
+    return list;
   };
   const squads = Object.fromEntries(SOC.map(([k]) => [k, squad(k)]));
   const statsOf = (k) => squads[k].map((p) => {
@@ -69,26 +73,15 @@
 
   // ---------- Spiele ----------
   const M = (key, h, a, state, start, extra = {}) => ({ key, league: "bl1", league_name: "Nordliga", sport: "soccer", state, clock: "", start, fav: h === FAV || a === FAV, link: "https://github.com/NojoMcDybo/arena", pitch: true, events: [], source: "demo", home: T(h), away: T(a), ...extra });
-  const nm = (k, i) => squads[k][i].name.split(" ").pop();
-  const live1 = M("soccer/nord:1", "nor", "haf", "in", now - 80 * 60000, {
-    clock: "67'",
-    events: [
-      { id: "a", minute: "11'", kind: "goal", side: "home", title: "Tor für Nordstadt!", text: nm("nor", 9), big: 3 },
-      { id: "b", minute: "18'", kind: "goal", side: "away", title: "Tor für Hafenstadt!", text: nm("haf", 10), big: 3 },
-      { id: "c", minute: "19'", kind: "yellow", side: "home", title: "Gelbe Karte", text: `${nm("nor", 4)} (Nordstadt)`, big: 1 },
-      { id: "d", minute: "45+1'", kind: "goal", side: "away", title: "Tor für Hafenstadt!", text: `${nm("haf", 11)} (Kopfball)`, big: 3 },
-      { id: "e", minute: "46'", kind: "half", side: "", title: "Halbzeit", text: "Nordstadt 1:2 Hafenstadt", big: 2 },
-      { id: "f", minute: "61'", kind: "sub", side: "home", title: "Wechsel Nordstadt", text: `${nm("nor", 15)} für ${nm("nor", 7)}`, big: 1 },
-    ],
-  });
-  live1.home.score = "1"; live1.away.score = "2";
-  const live2 = M("soccer/nord:2", "kue", "ste", "in", now - 80 * 60000, { clock: "66'" }); live2.home.score = "3"; live2.away.score = "1";
-  const pre1 = M("soccer/nord:3", "ber", "mue", "pre", now + 3 * H);
+  // Live-Fußball: dieselbe Welt wie in der Notch (soccer-world.js) – hängt nur von der Uhrzeit ab, Ergebnisse bleiben realistisch, Tore sind selten
+  const world = window.SoccerWorld.create({ team: (k) => T(k), source: "espn" }); // "espn" schaltet in der Oberfläche den Ballverlauf frei
+  const book = window.SoccerWorld.playbook();
+  const soccerNow = () => world.at(Date.now()).matches;
   const nba1 = {
     key: "basketball/metro:1", league: "nba", league_name: "Metro-Liga", sport: "basketball", state: "in", clock: "3. 5:12", start: now - 90 * 60000, fav: false,
     link: "https://github.com/NojoMcDybo/arena", pitch: false, court: true, events: [], source: "demo", home: T("riv", "71"), away: T("har", "68"),
   };
-  const sched = [];
+  const sched = []; // feste Spiele um die Live-Spiele herum
   [["sch", "fel"], ["tal", "wei"], ["nor", "kue"], ["mue", "haf"], ["ste", "ber"], ["fel", "nor"], ["wei", "sch"]].forEach((p, i) => {
     const st = now + (i - 3) * D + 2 * H;
     const m = M(`soccer/nord:s${i}`, p[0], p[1], st < now ? "post" : "pre", st, { clock: st < now ? "Ende" : "" });
@@ -100,26 +93,32 @@
     sched.push({ key: `basketball/metro:s${i}`, league: "nba", league_name: "Metro-Liga", sport: "basketball", state: st < now ? "post" : "pre", clock: st < now ? "Ende" : "", start: st, fav: false, link: "https://github.com/NojoMcDybo/arena", pitch: false, court: true, events: [], source: "demo", home: T(h, st < now ? "112" : ""), away: T(a, st < now ? "104" : "") });
   });
   { const t = M("soccer/club.friendly:f1", "nor", "wei", "pre", now + 2 * D + 4 * H); t.league = "test"; t.league_name = "Testspiele"; sched.push(t); }
-  sched.push(live1, live2, pre1, nba1);
-  sched.sort((a, b) => a.start - b.start);
-  const state = { updated: now, error: "", matches: [live1, live2, pre1, nba1] };
+  const allSched = () => [...sched, ...soccerNow(), nba1].sort((a, b) => a.start - b.start);
+  const state = { updated: now, error: "", matches: [...soccerNow(), nba1] };
 
-  // Live: jede Spielminute dauert 4 Sekunden, ab und zu fällt ein Tor
+  // Live: Spielstände und Minuten aus der Welt übernehmen, sobald sich etwas ändert
+  let liveSig = "";
   setInterval(() => {
-    for (const m of [live1, live2]) {
-      let min = parseInt(m.clock, 10) + 1;
-      if (min > 90) min = 46;
-      m.clock = `${min}'`;
-      if (Math.random() < 0.06) {
-        const side = Math.random() < 0.5 ? "home" : "away";
-        m[side].score = String(+m[side].score + 1);
-        m.events = [...m.events, { id: "g" + Date.now(), minute: `${min}'`, kind: "goal", side, title: `Tor für ${m[side].short}!`, text: nm(m[side].id.split(":")[1], 9 + Math.floor(Math.random() * 3)), big: 3 }];
-        if (m === live1) P.bus("notch:alert", { title: "Tor!", text: `${live1.home.short} ${live1.home.score}:${live1.away.score} ${live1.away.short} (${min}')` });
-      }
-    }
-    state.updated = Date.now();
+    const ms = soccerNow();
+    const sig = ms.map((m) => [m.key, m.state, m.clock, m.home.score, m.away.score, m.events.length].join("|")).join(";");
+    if (sig === liveSig) return;
+    liveSig = sig;
+    state.updated = Date.now(); state.matches = [...ms, nba1];
     P.emit("sport", { ...state, matches: [...state.matches] });
-  }, 4000);
+  }, 1000);
+
+  let watched = "";
+  const seenGoals = new Set(soccerNow().flatMap((m) => m.events.map((e) => e.id)));
+  setInterval(() => {
+    for (const m of soccerNow()) {
+      for (const ev of m.events) {
+        if (seenGoals.has(ev.id)) continue;
+        seenGoals.add(ev.id);
+        if (ev.kind === "goal" && m.key === watched) P.emit("sport-plays", { key: m.key, reset: false, plays: [book.goal(ev)] });
+      }
+      if (m.key === watched && m.state === "in" && m.clock !== "HZ") P.emit("sport-plays", { key: m.key, reset: false, plays: [book.next(m)] });
+    }
+  }, 2400);
 
   // ---------- Tabellen ----------
   const row = (rank, t, pts, note = "", color = "") => ({ rank, team: T(t), played: "6", won: String(Math.floor(pts / 3)), draw: String(pts % 3), lost: String(6 - Math.floor(pts / 3) - (pts % 3)), goals: `${pts}:${12 - rank}`, diff: `${pts - 12 + rank > 0 ? "+" : ""}${pts - 12 + rank}`, points: String(pts), pct: "", behind: "", note, color, fav: t === FAV });
@@ -132,22 +131,13 @@
 
   // ---------- Einstellungen ----------
   const toPick = (t) => ({ key: t.id, name: t.name, logo: t.logo });
-  const settings = { sport: { on: true, leagues: ["bl1", "nba"], teams: [toPick(teams.nor), toPick(teams.haf)], scope: "all", expand: "goals", center: true, pitch: true, fullscreen: true }, notch: true, pending: false };
+  const settings = { sport: { on: true, leagues: ["bl1", "nba"], teams: [toPick(teams.nor), toPick(teams.haf)], scope: "all", expand: "off", center: true, pitch: true, fullscreen: true }, notch: true, pending: false };
   const leagues = [["bl1", "Nordliga", "Deutschland"], ["dfb", "Küstenpokal", "Deutschland"], ["nba", "Metro-Liga", "US-Sport"], ["test", "Testspiele", "Vereine"]]
     .map(([id, name, group]) => ({ id, name, group, sport: id === "nba" ? "basketball" : "soccer", source: "Demo", auto: id === "test" }));
   const leagueMeta = [{ id: "bl1", logo: crest("NL", "#1f6feb"), dark: "" }, { id: "dfb", logo: crest("KP", "#e8590c"), dark: "" }, { id: "nba", logo: crest("ML", "#c92a2a", false), dark: "" }];
 
   // ---------- Ballverlauf und Wurfbild ----------
-  const plays = () => {
-    const out = []; let x = 50, y = 50;
-    ["pass", "pass", "take-on", "pass", "cross", "aerial", "pass", "shot-on-target", "pass", "tackle", "pass", "cross", "shot-off-target", "pass", "pass", "pass", "pass", "pass"].forEach((k, i) => {
-      const side = i % 5 < 3 ? "home" : "away";
-      const nx = Math.max(4, Math.min(96, x + (side === "home" ? 12 : -12) + (Math.random() - 0.5) * 20)), ny = Math.max(6, Math.min(94, y + (Math.random() - 0.5) * 40));
-      out.push({ id: "p" + i, t: now - 60000 + i * 2500, minute: `${60 + Math.floor(i / 3)}'`, kind: k, side, jersey: String(2 + ((i * 7) % 20)), who: [nm("nor", 7), nm("nor", 9), nm("haf", 10), nm("haf", 6), nm("nor", 10)][i % 5], x, y, x2: nx, y2: ny });
-      x = nx; y = ny;
-    });
-    return out;
-  };
+  const plays = (key) => { const m = soccerNow().find((x) => x.key === key); return m && m.state !== "pre" ? book.history(m) : []; };
   const shots = (n) => {
     const out = [];
     for (let i = 0; i < n; i++) {
@@ -163,17 +153,20 @@
   const lu = (k, f) => ({ formation: f, players: squads[k].slice(0, 12).map((p, i) => ({ id: p.id, jersey: p.jersey, name: p.name, pos: (f === "4-2-3-1" ? ["G", "RB", "CD-R", "CD-L", "LB", "RM", "LM", "AM-R", "AM", "AM-L", "F", "F"] : ["G", "CD-R", "CD", "CD-L", "RM", "CM-R", "CM-L", "LM", "AM-R", "AM-L", "F", "F"])[i], starter: i < 11, sub_in: i === 11, sub_out: i === 7, place: i + 1 })) });
   const form = (r) => r.split("").map((x, i) => ({ r: x, score: x === "s" ? "2:1" : x === "n" ? "0:1" : "1:1", opp: SOC[(i * 3 + 2) % 10][1], home: i % 2 === 0, date: now - (i + 1) * 7 * D, comp: "Nordliga" }));
   const detail = (key) => {
-    const m = [live1, live2, pre1].find((x) => x.key === key) ?? live1;
+    const all = soccerNow();
+    const m = all.find((x) => x.key === key) ?? all[1];
     const pre = m.state === "pre";
     const hk = m.home.id.split(":")[1], ak = m.away.id.split(":")[1];
     const st = (label, h, a, unit = "") => ({ label, home: h + unit, away: a + unit, h, a });
-    const r = rng("pulse" + key);
+    const r = rng("pulse" + m.key);
+    const min = m.state === "post" ? 90 : Math.max(1, parseInt(m.clock, 10) || 46); // bisherige Spielminute
     const pulse = [];
-    for (let i = 0; i < 40; i++) pulse.push({ minute: Math.floor(r() * 67), side: r() < 0.55 ? "home" : "away", w: [1, 2, 2, 3][i % 4] });
-    pulse.push({ minute: 11, side: "home", w: 5 }, { minute: 18, side: "away", w: 5 }, { minute: 46, side: "away", w: 5 });
+    for (let i = 0; i < Math.round(min * 0.6); i++) pulse.push({ minute: Math.floor(r() * min), side: r() < 0.55 ? "home" : "away", w: [1, 2, 2, 3][i % 4] });
+    for (const e of m.events) if (e.kind === "goal") pulse.push({ minute: parseInt(e.minute, 10), side: e.side, w: 5 });
     pulse.sort((a, b) => a.minute - b.minute);
+    const hg = +m.home.score || 0, ag = +m.away.score || 0, cards = (s) => m.events.filter((e) => e.kind === "yellow" && e.side === s).length;
     return {
-      stats: pre ? [st("Tore (Saison)", 9, 8), st("Gegentore (Saison)", 2, 8)] : [st("Ballbesitz", 58, 42, " %"), st("Schüsse", 14, 9), st("Aufs Tor", 5, 4), st("Ecken", 7, 3), st("Passquote", 86, 79, " %"), st("Zweikampfquote", 52, 48, " %"), st("Fouls", 9, 12), st("Gelbe Karten", 1, 0)],
+      stats: pre ? [st("Tore (Saison)", 9, 8), st("Gegentore (Saison)", 2, 8)] : [st("Ballbesitz", 58, 42, " %"), st("Schüsse", 9 + hg * 2, 7 + ag * 2), st("Aufs Tor", 3 + hg, 3 + ag), st("Ecken", 7, 3), st("Passquote", 86, 79, " %"), st("Zweikampfquote", 52, 48, " %"), st("Fouls", 9, 12), st("Gelbe Karten", cards("home"), cards("away"))],
       pulse: pre ? [] : pulse, lineup_home: lu(hk, "4-2-3-1"), lineup_away: lu(ak, "3-4-2-1"),
       venue: m.home.short + "-Arena", city: m.home.short, referee: "Mara Lindgren", attendance: pre ? 0 : 41230,
       odds: pre ? [0.5, 0.27, 0.23] : [], odds_by: "Demo", form_home: form("ssuns"), form_away: form("nsuun"),
@@ -196,13 +189,14 @@
     league_meta: () => leagueMeta,
     notch_rect: () => ({ dock: "top", x: innerWidth / 2 - 170, y: 0, w: 340, h: 34 }),
     sport_teams: ({ league } = {}) => Object.values(teams).filter((t) => (league === "nba" ? t.id.startsWith("basketball") : t.id.startsWith("soccer"))).map(toPick),
-    schedule: async () => { await new Promise((r) => setTimeout(r, 250)); return sched; },
+    schedule: async () => { await new Promise((r) => setTimeout(r, 250)); return allSched(); },
     standings: ({ league }) => (league === "nba" ? nbaTable : table),
-    team_view: ({ key }) => ({ next: sched.filter((m) => m.state === "pre" && (m.home.id === key || m.away.id === key)), last: sched.filter((m) => m.state === "post" && (m.home.id === key || m.away.id === key)).reverse() }),
+    team_view: ({ key }) => { const all = allSched(); return { next: all.filter((m) => m.state === "pre" && (m.home.id === key || m.away.id === key)), last: all.filter((m) => m.state === "post" && (m.home.id === key || m.away.id === key)).reverse() }; },
     match_detail: ({ key }) => ({ ...detail(key), clips: [] }),
-    match_plays: ({ key }) => (String(key).startsWith("basketball") ? shots(60) : plays()),
+    match_plays: ({ key }) => (String(key).startsWith("basketball") ? shots(60) : plays(key)),
     sport_watch: ({ key }) => {
-      if (key) setTimeout(() => P.emit("sport-plays", { key, reset: true, plays: String(key).startsWith("basketball") ? shots(60) : plays() }), 200);
+      if (key) setTimeout(() => P.emit("sport-plays", { key, reset: true, plays: String(key).startsWith("basketball") ? shots(60) : plays(key) }), 200);
+      watched = key || "";
       return null;
     },
     league_pool: async () => { await new Promise((r) => setTimeout(r, 500)); return { league: "Nordliga", players: SOC.flatMap(([k]) => statsOf(k).map((s) => ({ ...s, team: T(k) }))) }; },

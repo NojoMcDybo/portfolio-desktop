@@ -109,33 +109,35 @@ export function createNotchBackend({ toast = () => {} } = {}) {
   // ---------- Live-Sport (sport.rs; gleiche Formen wie in Arena) ----------
   const crest = (abbr, color) => svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${color}"/><stop offset="1" stop-color="#0b0b0d" stop-opacity=".55"/></linearGradient></defs><circle cx="50" cy="50" r="46" fill="url(#g)"/><circle cx="50" cy="50" r="40" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-weight="800" font-size="${abbr.length > 3 ? 24 : 30}" fill="#fff">${abbr}</text></svg>`);
   const SOC = [["nor", "FC Nordstadt", "Nordstadt", "NOR", "#1f6feb"], ["haf", "Hafenstadt SV", "Hafenstadt", "HAF", "#e8590c"], ["kue", "Küstenwacht 04", "Küstenwacht", "KÜW", "#12b5b0"], ["ste", "SC Steinbruch", "Steinbruch", "STE", "#8b5cf6"], ["ber", "Bergwerk Union", "Bergwerk", "BER", "#f5c518"], ["mue", "Mühlental FC", "Mühlental", "MÜH", "#22a455"]];
-  const team = (k, score = "") => { const [id, name, short, abbr, color] = SOC.find((s) => s[0] === k); return { id: `soccer:${id}`, name, short, abbr, logo: crest(abbr, color), color, score }; };
-  const M = (key, h, a, state, start, extra = {}) => ({ key, league: "bl1", league_name: "Nordliga", sport: "soccer", state, clock: "", start, fav: h === "nor" || a === "nor", link: "https://github.com/NojoMcDybo/arena", pitch: true, events: [], source: "demo", home: team(h), away: team(a), ...extra });
-  const live1 = M("soccer/nord:1", "nor", "haf", "in", now() - 80 * 60e3, { clock: "67'", events: [
-    { id: "a", minute: "11'", kind: "goal", side: "home", title: "Tor für Nordstadt!", text: "Brandt", big: 3 },
-    { id: "b", minute: "18'", kind: "goal", side: "away", title: "Tor für Hafenstadt!", text: "Vogel", big: 3 },
-    { id: "c", minute: "19'", kind: "yellow", side: "home", title: "Gelbe Karte", text: "Kessler (Nordstadt)", big: 1 },
-    { id: "d", minute: "45+1'", kind: "goal", side: "away", title: "Tor für Hafenstadt!", text: "Lorenz (Kopfball)", big: 3 },
-    { id: "e", minute: "46'", kind: "half", side: "", title: "Halbzeit", text: "Nordstadt 1:2 Hafenstadt", big: 2 },
-    { id: "f", minute: "61'", kind: "sub", side: "home", title: "Wechsel Nordstadt", text: "Falk für Engel", big: 1 }] });
-  live1.home.score = "1"; live1.away.score = "2";
-  const live2 = M("soccer/nord:2", "kue", "ste", "in", now() - 80 * 60e3, { clock: "66'" }); live2.home.score = "3"; live2.away.score = "1";
-  const pre1 = M("soccer/nord:3", "ber", "mue", "pre", now() + 3 * 3600e3);
-  const sportState = { updated: now(), error: "", matches: [live1, live2, pre1] };
-  const plays = () => { const out = []; let x = 50, y = 50; ["pass", "pass", "take-on", "pass", "cross", "aerial", "pass", "shot-on-target", "pass", "tackle", "pass", "cross", "shot-off-target", "pass", "pass", "pass", "pass", "pass"].forEach((k, i) => { const side = i % 5 < 3 ? "home" : "away"; const nx = clamp(x + (side === "home" ? 12 : -12) + rnd(-10, 10), 4, 96), ny = clamp(y + rnd(-20, 20), 6, 94); out.push({ id: "p" + i, t: now() - 60000 + i * 2500, minute: `${60 + Math.floor(i / 3)}'`, kind: k, side, jersey: String(2 + ((i * 7) % 20)), who: ["Brandt", "Falk", "Vogel", "Keller", "Sander"][i % 5], x, y, x2: nx, y2: ny }); x = nx; y = ny; }); return out; };
-  let watched = "";
+  const logos = new Map();
+  const team = (k) => { const [id, name, short, abbr, color] = SOC.find((s) => s[0] === k); if (!logos.has(k)) logos.set(k, crest(abbr, color)); return { id: `soccer:${id}`, name, short, abbr, logo: logos.get(k), color, score: "" }; };
+
+  // Dieselbe Welt wie in der Arena (shim/soccer-world.js): sie hängt nur von der Uhrzeit ab, Ergebnisse bleiben realistisch, Tore sind selten,
+  // danach beginnt ein neues Spiel. source "espn" schaltet in der Oberfläche das Spielfeld (Ballverlauf) frei.
+  const SW = window.SoccerWorld;
+  const world = SW.create({ team, source: "espn" });
+  let sportState = { updated: now(), error: "", matches: world.at(now()).matches };
+  const seen = new Set(sportState.matches.flatMap((m) => m.events.map((e) => e.id))); // schon Geschehenes löst nichts mehr aus
+  let sportSig = "", watched = "";
+
+  const book = SW.playbook(); // Ballverlauf fürs Spielfeld (shim/soccer-world.js)
+
   setInterval(() => {
-    for (const m of [live1, live2]) {
-      let min = parseInt(m.clock, 10) + 1; if (min > 90) min = 46; m.clock = `${min}'`;
-      if (Math.random() < 0.06) {
-        const side = Math.random() < 0.5 ? "home" : "away"; m[side].score = String(+m[side].score + 1);
-        const ev = { id: "g" + now(), minute: `${min}'`, kind: "goal", side, title: `Tor für ${m[side].short}!`, text: ["Brandt", "Falk", "Vogel", "Keller"][Math.floor(rnd(0, 4))], big: 3 };
-        m.events = [...m.events, ev];
-        emit("sport-news", { key: m.key, ev, score: `${m.home.score}:${m.away.score}`, at: now() });
-      }
+    const ms = world.at(now()).matches;
+    for (const m of ms) for (const ev of m.events) {
+      if (seen.has(ev.id)) continue;
+      seen.add(ev.id);
+      emit("sport-news", { key: m.key, ev, score: `${m.home.score}:${m.away.score}`, at: now() });
+      if (ev.kind === "goal" && m.key === watched) emit("sport-plays", { key: m.key, reset: false, plays: [book.goal(ev, now())] });
     }
-    sportState.updated = now(); emit("sport", { ...sportState, matches: [...sportState.matches] });
-  }, 4000);
+    const sig = ms.map((m) => [m.key, m.state, m.clock, m.home.score, m.away.score, m.events.length].join("|")).join(";");
+    if (sig !== sportSig) { sportSig = sig; sportState = { updated: now(), error: "", matches: ms }; emit("sport", { ...sportState }); }
+  }, 1000);
+  // solange man das Spielfeld sieht, kommt alle paar Sekunden eine Aktion dazu
+  setInterval(() => {
+    const m = watched && sportState.matches.find((x) => x.key === watched);
+    if (m && m.state === "in" && m.clock !== "HZ") emit("sport-plays", { key: m.key, reset: false, plays: [book.next(m, now())] });
+  }, 2400);
 
   // ---------- Ablage ----------
   let shelf = [];
@@ -143,7 +145,8 @@ export function createNotchBackend({ toast = () => {} } = {}) {
   const files = new Map(); // Name -> File (vom Desktop beim Ablegen mitgegeben)
 
   // ---------- Befehle ----------
-  let settings = lsGet("settings", null), cards = lsGet("cards", null), dock = lsGet("dock", "top");
+  // Ohne eigene Wahl klappt die Notch bei Toren nicht auf (der Spielstand in der Mitte läuft trotzdem weiter); wer will, stellt es in den Einstellungen um
+  let settings = lsGet("settings", null) ?? { sport: { expand: "off" } }, cards = lsGet("cards", null), dock = lsGet("dock", "top");
   let hit = { x: 0, y: 0, w: 0, h: 0 }, hover = false;
   const LEAGUES = [["bl1", "Nordliga", "Deutschland"], ["dfb", "Küstenpokal", "Deutschland"], ["test", "Testspiele", "Vereine"]].map(([id, name, group]) => ({ id, name, group, sport: "soccer", source: "Demo", auto: id === "test" }));
   const laya = { want: false, state: "off", done: 0, total: 307_000_000, message: "", dir: "" };
@@ -173,7 +176,11 @@ export function createNotchBackend({ toast = () => {} } = {}) {
     activity_open: ({ id }) => { toast(`„${acts.get(id)?.title ?? id}“ öffnet in der echten App das zugehörige Programm.`); return null; },
     activity_focus_app: () => null,
     activity_input: () => null,
-    sport_watch: ({ key }) => { if (key && key !== watched) { watched = key; setTimeout(() => emit("sport-plays", { key, reset: true, plays: plays() }), 200); } else if (!key) watched = ""; return null; },
+    sport_watch: ({ key }) => {
+      if (key && key !== watched) { watched = key; const m = sportState.matches.find((x) => x.key === key); setTimeout(() => emit("sport-plays", { key, reset: true, plays: m && m.state !== "pre" ? book.history(m, now()) : [] }), 200); }
+      else if (!key) watched = "";
+      return null;
+    },
     sport_leagues: () => LEAGUES,
     sport_teams: () => SOC.map(([id, name, , abbr, color]) => ({ key: `soccer:${id}`, name, logo: crest(abbr, color) })),
     arena_installed: () => true,

@@ -3,10 +3,11 @@
 // Programm selbst (shim/tauri-shim.js leitet sie per postMessage an hier weiter). Lernseiten (mode "bar") bekommen eine Leiste.
 import { I } from "./icons.js";
 import { animate, SPRING, POP } from "./motion.js";
+import { S } from "./stage.js";
 
 const MENUBAR = 30;
 const DOCK_GAP = 104; // so viel Platz unten lassen (Dock + Rand)
-const isSmall = () => innerWidth <= 760;
+const isSmall = () => S.small;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 export function h(tag, cls = "", html = "") {
@@ -31,7 +32,7 @@ export class WM {
   #emit(name, ...a) { (this.subs[name] ?? []).forEach((f) => f(...a)); }
   get(key) { return this.wins.get(key); }
   all() { return [...this.wins.values()]; }
-  area() { return { x: 0, y: MENUBAR, w: innerWidth, h: Math.max(240, innerHeight - MENUBAR - DOCK_GAP) }; }
+  area() { return { x: 0, y: MENUBAR, w: S.w, h: Math.max(240, S.h - MENUBAR - DOCK_GAP) }; }
 
   /** spec: { key, title, mode: "app"|"bar", icon, src, size:[w,h], min:[w,h], bg, footer:Element, build(body, win), sandbox, appId } */
   open(spec) {
@@ -95,9 +96,11 @@ export class WM {
 
     // Größe und Lage: Mitte, leicht versetzt, nie größer als die freie Fläche
     const a = this.area();
+    // Fenstergrößen sind für ca. 1600 px breite Bildschirme gedacht; auf der QHD-Bühne wachsen sie mit (Schrift bleibt gleich groß)
     const [sw, sh] = spec.size || [900, 640];
-    win.w = Math.min(sw, a.w - 24);
-    win.h = Math.min(sh + (spec.pad ?? 40), a.h - 6); // +40: Fußzeile/Leiste
+    const f = spec.noScale ? 1 : clamp(S.w / 1600, 1, 1.6);
+    win.w = Math.min(sw * f, a.w - 24);
+    win.h = Math.min(sh * f + (spec.pad ?? 40), a.h - 6); // +40: Fußzeile/Leiste
     const n = this.wins.size % 6;
     win.x = clamp(Math.round((a.w - win.w) / 2 + (n - 2) * 26), 8, Math.max(8, a.w - win.w - 8));
     win.y = Math.round(a.y + Math.max(8, (a.h - win.h) / 2 + (n - 2) * 20));
@@ -154,7 +157,7 @@ export class WM {
         const a = this.area();
         w.w = Math.min(w.w, a.w - 8); w.h = Math.min(w.h, a.h);
         w.x = clamp(w.x, -(w.w - 140), a.w - 140);
-        w.y = clamp(w.y, MENUBAR, Math.max(MENUBAR, innerHeight - 80));
+        w.y = clamp(w.y, MENUBAR, Math.max(MENUBAR, S.h - 80));
       }
       this.#apply(w);
     }
@@ -227,8 +230,8 @@ export class WM {
   #move(w, x, y) {
     if (w.max) return;
     const a = this.area();
-    w.x = clamp(x, -(w.w - 140), innerWidth - 140);
-    w.y = clamp(y, MENUBAR, innerHeight - 70);
+    w.x = clamp(x, -(w.w - 140), S.w - 140);
+    w.y = clamp(y, MENUBAR, S.h - 70);
     w.el.style.translate = `${w.x}px ${w.y}px`;
     void a;
     this.#emit("move", w);
@@ -241,11 +244,12 @@ export class WM {
     root.addEventListener("pointerdown", (e) => {
       const bar = e.target.closest(".win-bar, [data-drag]");
       if (!bar || e.button !== 0 || e.target.closest(".wc, button, a, input, textarea, select") || isSmall()) return;
-      let sx = e.clientX, sy = e.clientY, ox = w.x, oy = w.y;
+      let sx = e.clientX / S.k, sy = e.clientY / S.k, ox = w.x, oy = w.y;
       let moved = false;
       try { bar.setPointerCapture(e.pointerId); } catch {}
       const mv = (ev) => {
-        if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 4) return;
+        const cx = ev.clientX / S.k, cy = ev.clientY / S.k;
+        if (!moved && Math.hypot(cx - sx, cy - sy) < 4) return;
         if (!moved) {
           moved = true;
           document.body.classList.add("dragging");
@@ -254,12 +258,12 @@ export class WM {
             const ratio = (sx - w.x) / w.w;
             Object.assign(w, w.prev); w.max = false; w.prev = null; w.el.classList.remove("max");
             const z = w.el.querySelector(".wc .z"); if (z) z.innerHTML = I.max;
-            w.x = ev.clientX - w.w * ratio; w.y = MENUBAR;
+            w.x = cx - w.w * ratio; w.y = MENUBAR;
             this.#apply(w);
-            sx = ev.clientX; sy = ev.clientY; ox = w.x; oy = w.y;
+            sx = cx; sy = cy; ox = w.x; oy = w.y;
           }
         }
-        this.#move(w, ox + ev.clientX - sx, oy + ev.clientY - sy);
+        this.#move(w, ox + cx - sx, oy + cy - sy);
       };
       const up = () => { document.body.classList.remove("dragging"); this.#emit("moveend", w); bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up); bar.removeEventListener("pointercancel", up); };
       bar.addEventListener("pointermove", mv);
@@ -275,10 +279,10 @@ export class WM {
       e.preventDefault();
       try { g.setPointerCapture(e.pointerId); } catch {}
       document.body.classList.add("dragging");
-      const sx = e.clientX, sy = e.clientY, o = { x: w.x, y: w.y, w: w.w, h: w.h };
+      const sx = e.clientX / S.k, sy = e.clientY / S.k, o = { x: w.x, y: w.y, w: w.w, h: w.h };
       const [mw, mh] = w.spec.min || [420, 300];
       const mv = (ev) => {
-        const dx = ev.clientX - sx, dy = ev.clientY - sy;
+        const dx = ev.clientX / S.k - sx, dy = ev.clientY / S.k - sy;
         let { x, y, w: ww, h: hh } = o;
         if (dir.includes("e")) ww = Math.max(mw, o.w + dx);
         if (dir.includes("s")) hh = Math.max(mh, o.h + dy);
@@ -313,7 +317,7 @@ export class WM {
           case "minimize": this.minimize(w); break;
           case "toggleMax": this.toggleMax(w); break;
           case "dragStart": this.focus(w); w.drag = { x: w.x, y: w.y }; document.body.classList.add("dragging"); break;
-          case "dragMove": if (w.drag) this.#move(w, w.drag.x + d.dx, w.drag.y + d.dy); break;
+          case "dragMove": if (w.drag) this.#move(w, w.drag.x + d.dx / S.k, w.drag.y + d.dy / S.k); break;
           case "dragEnd": w.drag = null; document.body.classList.remove("dragging"); this.#emit("moveend", w); break;
         }
         break;

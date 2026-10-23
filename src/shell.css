@@ -62,17 +62,17 @@ body.booting .wallpaper i { animation-play-state: paused; }
 
 /* ================= Desktop ================= */
 
-#desktop { position: fixed; inset: 0; overflow: hidden; background: var(--wp-base); user-select: none; }
+#desktop { position: fixed; inset: 0; overflow: hidden; background: var(--wp-base); user-select: none; --vw: 1vw; --vh: 1vh; --vmax: max(var(--vw), var(--vh)); }
 .wallpaper { position: absolute; inset: 0; background: var(--wp); overflow: hidden; }
 .wallpaper::after { content: ""; position: absolute; inset: 0; opacity: 0.07; mix-blend-mode: overlay; pointer-events: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
-.wallpaper i { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; filter: blur(80px); opacity: 0.35; will-change: transform; }
-.wallpaper i:nth-child(1) { left: -12vmax; top: -14vmax; background: #3d6fd1; animation: drift1 38s ease-in-out infinite alternate; }
-.wallpaper i:nth-child(2) { right: -16vmax; top: 4vmax; background: #7a4fc9; animation: drift2 46s ease-in-out infinite alternate; }
-.wallpaper i:nth-child(3) { left: 24vmax; bottom: -30vmax; background: #1f8f94; animation: drift3 52s ease-in-out infinite alternate; }
-@keyframes drift1 { to { transform: translate3d(14vmax, 10vmax, 0) scale(1.15); } }
-@keyframes drift2 { to { transform: translate3d(-12vmax, 12vmax, 0) scale(0.9); } }
-@keyframes drift3 { to { transform: translate3d(10vmax, -8vmax, 0) scale(1.2); } }
+.wallpaper i { position: absolute; width: calc(46 * var(--vmax)); height: calc(46 * var(--vmax)); border-radius: 50%; filter: blur(80px); opacity: 0.35; will-change: transform; }
+.wallpaper i:nth-child(1) { left: calc(-12 * var(--vmax)); top: calc(-14 * var(--vmax)); background: #3d6fd1; animation: drift1 38s ease-in-out infinite alternate; }
+.wallpaper i:nth-child(2) { right: calc(-16 * var(--vmax)); top: calc(4 * var(--vmax)); background: #7a4fc9; animation: drift2 46s ease-in-out infinite alternate; }
+.wallpaper i:nth-child(3) { left: calc(24 * var(--vmax)); bottom: calc(-30 * var(--vmax)); background: #1f8f94; animation: drift3 52s ease-in-out infinite alternate; }
+@keyframes drift1 { to { transform: translate3d(calc(14 * var(--vmax)), calc(10 * var(--vmax)), 0) scale(1.15); } }
+@keyframes drift2 { to { transform: translate3d(calc(-12 * var(--vmax)), calc(12 * var(--vmax)), 0) scale(0.9); } }
+@keyframes drift3 { to { transform: translate3d(calc(10 * var(--vmax)), calc(-8 * var(--vmax)), 0) scale(1.2); } }
 
 /* ---- Menüleiste ---- */
 #menubar { position: absolute; inset: 0 0 auto 0; height: var(--menubar); display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 900;
@@ -105,14 +105,15 @@ body.booting .wallpaper i { animation-play-state: paused; }
 
 /* ---- Dock ---- */
 #dock { position: absolute; left: 0; right: 0; bottom: 12px; z-index: 900; display: flex; justify-content: center; pointer-events: none; }
-.dock-bar { pointer-events: auto; max-width: calc(100vw - 20px); display: flex; align-items: flex-end; gap: 8px; padding: 8px 10px; border-radius: 26px; background: rgba(46, 46, 52, 0.46); -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%);
+.dock-bar { pointer-events: auto; max-width: calc(var(--vw) * 100 - 20px); display: flex; align-items: flex-end; gap: 8px; padding: 8px 10px; border-radius: 26px; background: rgba(46, 46, 52, 0.46); -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 44px rgba(0, 0, 0, 0.45); }
-.dk { position: relative; width: 56px; height: 56px; display: grid; place-items: center; flex: none; transform-origin: 50% 100%; will-change: transform; }
+.dk { position: relative; width: 56px; height: 56px; display: grid; place-items: center; flex: none; }
+.dk-in { display: block; width: 100%; height: 100%; transform-origin: 50% 100%; }
 .dk img, .dk .dk-fallback { width: 100%; height: 100%; border-radius: 14px; object-fit: cover; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35); pointer-events: none; }
 .dk .dk-fallback { display: grid; place-items: center; font: 800 24px var(--n-font-display); background: linear-gradient(145deg, #3a3d46, #17181c); color: var(--n-ink); }
 .dk::after { content: ""; position: absolute; bottom: -6px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--n-ink); opacity: 0; transition: opacity 0.2s; }
 .dk.run::after { opacity: 0.85; }
-.dk-label { position: absolute; bottom: calc(100% + 12px); left: 50%; translate: -50% 6px; padding: 4px 10px; border-radius: 8px; white-space: nowrap; font-size: 12px; background: rgba(40, 40, 44, 0.82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); opacity: 0; pointer-events: none; }
+.dk-label { position: absolute; bottom: calc(100% + 12px); left: 50%; translate: -50% calc(6px - 56px * (var(--s, 1) - 1)); padding: 4px 10px; border-radius: 8px; white-space: nowrap; font-size: 12px; background: rgba(40, 40, 44, 0.82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); opacity: 0; pointer-events: none; }
 .dk-sep { width: 1px; align-self: stretch; margin: 6px 2px; background: var(--n-line-2); flex: none; }
 .dk.folder .dk-fallback { background: linear-gradient(145deg, #4a8ee0, #2455a8); }
 
@@ -210,7 +211,7 @@ body.dragging { cursor: grabbing; }
   :root { --dock-h: 70px; }
   #icons { display: none; }
   .win { inset: var(--menubar) 0 calc(var(--dock-h) + 20px) 0 !important; width: auto !important; height: auto !important; translate: none !important; border-radius: 0; }
-  .dock-bar { overflow-x: auto; scrollbar-width: none; max-width: calc(100vw - 16px); }
+  .dock-bar { overflow-x: auto; scrollbar-width: none; max-width: calc(var(--vw) * 100 - 16px); }
   .dock-bar::-webkit-scrollbar { display: none; }
   .dk-label { display: none; }
   .win-body, .win-foot, .win-bar { border-radius: 0; }
@@ -218,7 +219,7 @@ body.dragging { cursor: grabbing; }
   .dk { width: 46px; height: 46px; }
   .dock-bar { gap: 6px; padding: 7px 8px; border-radius: 22px; }
   .wf-id span, .wf-btn small { display: none; }
-  .mb-item[data-menu], .mb-right a { display: none; }
+  .mb-item[data-menu], .mb-right a, .mb-app { display: none; } /* die Notch sitzt in der Mitte: nur Logo links, Uhr rechts */
 }
 
 @media (prefers-reduced-motion: reduce) {

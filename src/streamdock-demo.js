@@ -3,11 +3,14 @@
 // angedockt folgt der Chat dem Player (Lage und Quermaß), mehr als 30 px wegziehen → löst sich, ein Fenster schließen
 // schließt das andere mit. Der „Stream“ ist ein erzeugtes Bild, kein Video.
 import { I } from "./icons.js";
+import { S } from "./stage.js";
 
 const SNAP = 20, BREAK = 30, CHAT_W = 340;
 const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const NAMES = ["lumi", "kaito_77", "fuchsbau", "NullEins", "mira.k", "TobiB", "sunnyside", "pixelhans", "ElsaF", "d4rkm0de", "Rosi", "quokka"];
 const LINES = ["das war sauber 👏", "wie lange läuft der Stream schon?", "GG", "hallo aus Münster!", "kann man das nachbauen?", "lag?", "👀", "nächste Runde bitte", "mega Spielzug", "Chat ist heute ruhig", "wo gibt's die Einstellungen?", "KEKW", "ich bin wegen des Titels hier", "Klasse Bildqualität"];
+
+const zoom = () => Math.min(1.6, Math.max(1, S.w / 1600)); // wie die Fenstergrößen in wm.js
 
 export function initStreamdock(wm) {
   let docked = null;
@@ -27,7 +30,7 @@ export function initStreamdock(wm) {
       return;
     }
     const player = wm.open({
-      key: "sd-player", title: s.name, mode: "app", pad: 0, size: [820, 470], min: [420, 260], bg: "#000",
+      key: "sd-player", title: s.name, mode: "app", pad: 0, size: [820 * zoom(), 470 * zoom()], noScale: true, min: [420, 260], bg: "#000", // wächst mit der QHD-Bühne, der Chat behält seine Breite
       build: (b, w) => buildPlayer(b, w, s),
       onClose: () => { const c = wm.get("sd-chat"); stop(); if (c) wm.close(c); },
     });
@@ -35,7 +38,7 @@ export function initStreamdock(wm) {
     // links neben die Mitte, damit rechts Platz für den Chat bleibt
     wm.setRect(player, { x: Math.max(12, Math.round((a.w - player.w - CHAT_W) / 2)), y: Math.round(a.y + 24), w: player.w, h: player.h });
     const chat = wm.open({
-      key: "sd-chat", title: "Chat · " + s.name, mode: "app", pad: 0, size: [CHAT_W, player.h], min: [260, 240], bg: "#18181b",
+      key: "sd-chat", title: "Chat · " + s.name, mode: "app", pad: 0, size: [CHAT_W, player.h], noScale: true, min: [260, 240], bg: "#18181b",
       build: (b, w) => buildChat(b, w, s),
       onClose: () => { const p = wm.get("sd-player"); stop(); if (p) wm.close(p); },
     });
@@ -109,7 +112,7 @@ export function initStreamdock(wm) {
         .sd-stage .sd-live{position:absolute;left:18px;bottom:16px;display:flex;gap:10px;align-items:center;padding:8px 14px;border-radius:12px;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff}
         .sd-stage .sd-live em{font:700 11px var(--n-font);font-style:normal;background:#e91916;border-radius:5px;padding:2px 6px;letter-spacing:.05em}
         .sd-stage .sd-live div{font:600 13px var(--n-font);line-height:1.25}.sd-stage .sd-live small{display:block;font-weight:400;opacity:.7;font-size:11.5px}
-        .sd-stage .sd-big{position:absolute;inset:0;display:grid;place-items:center;font:800 clamp(40px,12vw,150px)/1 var(--n-font-display);letter-spacing:-.04em;color:rgba(255,255,255,.1);text-transform:uppercase;white-space:nowrap}
+        .sd-stage .sd-big{position:absolute;inset:0;display:grid;place-items:center;font:800 clamp(40px,calc(var(--vw)*12),150px)/1 var(--n-font-display);letter-spacing:-.04em;color:rgba(255,255,255,.1);text-transform:uppercase;white-space:nowrap}
         .sd-stage .sd-note{position:absolute;right:16px;bottom:14px;color:rgba(255,255,255,.4);font-size:11px}
         .sd-pill{position:absolute;left:0;right:0;top:0;height:60px;display:flex;justify-content:center;padding-top:8px;z-index:4}
         .sd-pill-in{display:flex;align-items:center;gap:2px;padding:4px 6px;border-radius:99px;transform:translateY(-120%);transition:transform .45s var(--spring);height:40px}
