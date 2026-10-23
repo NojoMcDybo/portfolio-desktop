@@ -15,7 +15,7 @@ const APPS = {
   streamdock: { src: "streamdock", shim: true },
   arena: { src: "arena", shim: true, extra: ["soccer-world"] }, // soccer-world: gemeinsame Spielwelt mit der Notch
   kursbuch: { src: "kursbuch", shim: true },
-  folio: { src: "folio", shim: true }, // PDF.js und die Glas-Oberfläche; die Beispiel-PDFs erzeugt shim/app-folio.js
+  folio: { src: "folio", shim: true, extra: ["folio-docs"] }, // PDF.js und die Glas-Oberfläche; die Beispiel-PDFs sind die Lernseiten-Steckbriefe (tools/make-lern-pdfs.mjs)
   // Notch: echte Oberfläche (Notch selbst = index.html, Einstellungen = settings.html); die schwere Wake-Word-Laufzeit entfällt
   notch: { src: "notch", shim: true, pages: ["index.html", "settings.html"], prune: /ort-wasm|\.onnx$/, dropDirs: ["wakeword"] },
   haze: { src: "haze", shim: false },

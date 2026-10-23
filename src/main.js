@@ -40,8 +40,8 @@ function openSite(site, key = "site:" + site.id) {
     bg: "#101012", footer: () => siteFooter(site),
   });
 }
-const openLearn = () => wm.open({ key: "learn", title: "Lernseiten", mode: "bar", icon: "assets/icons/learn.svg", size: [940, 640], min: [520, 380], build: (b) => buildLearn(b, openSite) });
-const openWelcome = () => wm.open({ key: "welcome", title: "Willkommen", mode: "bar", icon: "assets/icons/notch.png", size: [900, 640], min: [520, 400], build: (b) => buildWelcome(b, openApp, openLearn, openCourtflow) });
+const openLearn = () => wm.open({ key: "learn", title: "Lernseiten", mode: "bar", icon: "assets/icons/learn.svg", size: [900, 600], min: [520, 380], build: (b) => buildLearn(b, openSite) });
+const openWelcome = () => wm.open({ key: "welcome", title: "Willkommen", mode: "bar", icon: "assets/icons/notch.png", size: [760, 500], min: [520, 400], build: (b) => buildWelcome(b, openApp, openLearn, openCourtflow) });
 const openNebel = () => openSite(NEBEL, "nebel");
 const openCourtflow = () => openSite(COURTFLOW, "courtflow");
 

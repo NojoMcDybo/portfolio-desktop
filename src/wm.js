@@ -96,11 +96,12 @@ export class WM {
 
     // Größe und Lage: Mitte, leicht versetzt, nie größer als die freie Fläche
     const a = this.area();
-    // Fenstergrößen sind für ca. 1600 px breite Bildschirme gedacht; auf der QHD-Bühne wachsen sie mit (Schrift bleibt gleich groß)
+    // Fenstergrößen sind für ca. 1600 px breite Bildschirme gedacht; auf der QHD-Bühne wachsen sie mit (Schrift bleibt gleich groß).
+    // Höchstens 84 % der Breite und 90 % der Höhe: rundherum bleibt Platz, und der Hintergrund bleibt zu sehen
     const [sw, sh] = spec.size || [900, 640];
-    const f = spec.noScale ? 1 : clamp(S.w / 1600, 1, 1.6);
-    win.w = Math.min(sw * f, a.w - 24);
-    win.h = Math.min(sh * f + (spec.pad ?? 40), a.h - 6); // +40: Fußzeile/Leiste
+    const f = spec.noScale ? 1 : clamp(S.w / 1600, 1, 1.4);
+    win.w = Math.min(sw * f, a.w * 0.84);
+    win.h = Math.min(sh * f + (spec.pad ?? 40), a.h * 0.9); // +40: Fußzeile/Leiste
     const n = this.wins.size % 6;
     win.x = clamp(Math.round((a.w - win.w) / 2 + (n - 2) * 26), 8, Math.max(8, a.w - win.w - 8));
     win.y = Math.round(a.y + Math.max(8, (a.h - win.h) / 2 + (n - 2) * 20));

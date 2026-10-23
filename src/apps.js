@@ -134,14 +134,14 @@ export const APPS = [
     about:
       "Ein PDF-Reader für Windows: jedes Dokument in einem eigenen Fenster, die Bedienung schwebt in Glas über der Seite. Suche mit Trefferzähler, Inhaltsverzeichnis aus den Lesezeichen, Textmarker, Stift und Textfeld als echte PDF-Anmerkungen, Invertierung für den Abend. Die geöffnete Seite läuft in die Notch.",
     try: [
-      "Ein Beispieldokument öffnen und mit Strg+F suchen.",
+      "Einen Steckbrief meiner Lernseiten öffnen und mit Strg+F suchen; das Inhaltsverzeichnis stammt aus den Lesezeichen.",
       "Taste M drücken und einen Satz markieren – ein Doppelklick auf die Anmerkung öffnet ihr Menü.",
       "Strg+I kehrt die Seite um; eine eigene PDF lässt sich auf das Fenster ziehen.",
     ],
-    demo: "Beispieldokumente mit erfundenen Inhalten. Eigene PDFs bleiben im Browser, „Sichern“ gilt hier nur im Speicher.",
+    demo: "Als Beispiele dienen PDF-Steckbriefe meiner sieben Lernseiten. Eigene PDFs bleiben im Browser, „Sichern“ gilt hier nur im Speicher.",
     repo: "folio",
     stack: "Tauri 2 · Rust · TypeScript · PDF.js",
-    size: [980, 660],
+    size: [840, 540],
     page: "apps/folio/index.html",
     icon: "assets/icons/folio.png",
     accent: "#9ac8ff",

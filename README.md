@@ -29,7 +29,7 @@ Kein Framework: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-M
 
 **Nachbau:** Nur *Vantage* (Quellcode privat) ist von Hand geschrieben (`apps/vantage`): eigener Code, der die Oberfläche der App nachzeichnet (Pro mit Live, Spielplan, Pokal, Teams; Ich; Studio mit Clip-Editor) mit erfundener Welt aus Ligen, Teams, Spielern und Ergebnissen (`world.js`). Schriften: Cinzel, Source Sans 3, Saira Semi Condensed (SIL OFL 1.1, Lizenzen in `apps/vantage/fonts/`). Champion- und Item-Bilder lädt die Seite zur Laufzeit aus Riots Data Dragon; fehlen sie, zeigt die Seite Kürzel.
 
-**Folio:** PDF-Reader mit [PDF.js](https://mozilla.github.io/pdf.js/) (Mozilla, Apache-2.0) und Glas-Oberfläche. `shim/app-folio.js` erzeugt drei erfundene Beispiel-PDFs selbst (Text, Formen, Lesezeichen), öffnet jedes Dokument in einem eigenen Fenster, nimmt eigene PDFs per Auswahl oder Drag-and-drop an (sie bleiben im Browser) und meldet die geöffnete Seite samt Suchstand an die Notch. „Sichern“ gilt in der Demo nur im Speicher.
+**Folio:** PDF-Reader mit [PDF.js](https://mozilla.github.io/pdf.js/) (Mozilla, Apache-2.0) und Glas-Oberfläche. Als Beispiele dienen sieben PDF-Steckbriefe meiner Lernseiten (`assets/pdfs`: Startseite als Bild, Aufbau, Ausschnitte, mit Lesezeichen); `node tools/make-lern-pdfs.mjs` erzeugt sie neu aus den Live-Seiten (braucht Chrome und playwright-core). `shim/app-folio.js` öffnet jedes Dokument in einem eigenen Fenster, nimmt eigene PDFs per Auswahl oder Drag-and-drop an (sie bleiben im Browser) und meldet die geöffnete Seite samt Suchstand an die Notch. „Sichern“ gilt in der Demo nur im Speicher.
 
 **Lernseiten, CourtFlow und Simulator** sind die echten Seiten auf GitHub Pages, eingebettet in ein Fenster; nichts davon ist kopiert.
 
