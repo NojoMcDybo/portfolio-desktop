@@ -12,6 +12,7 @@ import { animate, stagger, springValue, lift, POP, SPRING } from "./motion.js";
 const $ = (s) => document.querySelector(s);
 const REPO = "https://github.com/NojoMcDybo/portfolio-desktop";
 const NEBEL = { ...MORE.find((m) => m.id === "fogylation"), name: "nebel. Simulator", icon: "assets/icons/nebel.svg" };
+const COURTFLOW = { ...MORE.find((m) => m.id === "courtflow"), name: "CourtFlow", icon: "assets/icons/courtflow.png" };
 
 const wm = new WM($("#windows"));
 // Notch: die echte Oberfläche in einem durchsichtigen Fenster über dem Desktop; „Einstellungen“ in der Notch öffnet das Notch-Fenster
@@ -40,17 +41,19 @@ function openSite(site, key = "site:" + site.id) {
   });
 }
 const openLearn = () => wm.open({ key: "learn", title: "Lernseiten", mode: "bar", icon: "assets/icons/learn.svg", size: [940, 640], min: [520, 380], build: (b) => buildLearn(b, openSite) });
-const openWelcome = () => wm.open({ key: "welcome", title: "Willkommen", mode: "bar", icon: "assets/icons/notch.png", size: [900, 640], min: [520, 400], build: (b) => buildWelcome(b, openApp, openLearn) });
+const openWelcome = () => wm.open({ key: "welcome", title: "Willkommen", mode: "bar", icon: "assets/icons/notch.png", size: [900, 640], min: [520, 400], build: (b) => buildWelcome(b, openApp, openLearn, openCourtflow) });
 const openNebel = () => openSite(NEBEL, "nebel");
+const openCourtflow = () => openSite(COURTFLOW, "courtflow");
 
 // ---------- Dock ----------
 const DOCK = [
   ...APPS.map((a) => ({ key: a.id, name: a.name, icon: a.icon, open: () => openApp(a), app: a })),
   { sep: true },
   { key: "nebel", name: "nebel. Simulator", icon: NEBEL.icon, open: openNebel },
+  { key: "courtflow", name: "CourtFlow", icon: COURTFLOW.icon, open: openCourtflow },
   { key: "learn", name: "Lernseiten", icon: "assets/icons/learn.svg", open: openLearn },
 ];
-const dockKey = (k) => (k === "nebel" ? "nebel" : k.startsWith("site:") || k === "learn" ? "learn" : k);
+const dockKey = (k) => (k === "nebel" || k === "courtflow" ? k : k.startsWith("site:") || k === "learn" ? "learn" : k);
 const bar = $("#dock-bar");
 const items = new Map();
 for (const d of DOCK) {
@@ -298,7 +301,7 @@ runIntro({ skip }).then(() => {
   setTimeout(() => {
     const first = params.get("open");
     if (first === "none") return;
-    if (first) { const a = byId(first); a ? openApp(a) : first === "learn" ? openLearn() : first === "nebel" ? openNebel() : openWelcome(); }
+    if (first) { const a = byId(first); a ? openApp(a) : first === "learn" ? openLearn() : first === "nebel" ? openNebel() : first === "courtflow" ? openCourtflow() : openWelcome(); }
     else openWelcome();
   }, 1100);
 });

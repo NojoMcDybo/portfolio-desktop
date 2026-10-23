@@ -127,6 +127,26 @@ export const APPS = [
     accent: "#75b8ff",
     fallback: { version: "0.3.1", mb: 3.4, url: "https://github.com/NojoMcDybo/kursbuch/releases/latest" },
   },
+  {
+    id: "folio",
+    name: "Folio",
+    tag: "PDF-Reader mit Glas und Anmerkungen",
+    about:
+      "Ein PDF-Reader für Windows: jedes Dokument in einem eigenen Fenster, die Bedienung schwebt in Glas über der Seite. Suche mit Trefferzähler, Inhaltsverzeichnis aus den Lesezeichen, Textmarker, Stift und Textfeld als echte PDF-Anmerkungen, Invertierung für den Abend. Die geöffnete Seite läuft in die Notch.",
+    try: [
+      "Ein Beispieldokument öffnen und mit Strg+F suchen.",
+      "Taste M drücken und einen Satz markieren – ein Doppelklick auf die Anmerkung öffnet ihr Menü.",
+      "Strg+I kehrt die Seite um; eine eigene PDF lässt sich auf das Fenster ziehen.",
+    ],
+    demo: "Beispieldokumente mit erfundenen Inhalten. Eigene PDFs bleiben im Browser, „Sichern“ gilt hier nur im Speicher.",
+    repo: "folio",
+    stack: "Tauri 2 · Rust · TypeScript · PDF.js",
+    size: [980, 660],
+    page: "apps/folio/index.html",
+    icon: "assets/icons/folio.png",
+    accent: "#9ac8ff",
+    fallback: { version: "0.8.4", mb: 219, url: "https://github.com/NojoMcDybo/folio/releases/latest" },
+  },
 ];
 
 // Lernseiten laufen schon auf GitHub Pages: das Fenster zeigt die echte Seite, nichts ist nachgebaut.

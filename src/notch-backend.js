@@ -215,6 +215,9 @@ export function createNotchBackend({ toast = () => {} } = {}) {
     alert({ title, text, icon: ic, color = "#75b8ff", app = "Desktop", ms = 12000 }) {
       upsert({ id: "desk:" + now(), app, title, subtitle: text, icon: ic ?? icon('<circle cx="12" cy="12" r="8"/><path d="M12 8v5M12 16v.01"/>', color), color, priority: 20 }, { alert: true, ttl: Math.round(ms / 1000) });
     },
+    /** Dauerhafte Anzeige eines Programms (Folio: geöffnete PDF mit Seite) und ihr Ende */
+    activity(a) { upsert({ priority: 0, ...a }, { ttl: 180 }); },
+    removeActivity(id) { remove(id); },
     onOpenSettings: null, onDockDrag: null };
   upsert(bgAct()); hrTick();
   setInterval(bgTick, 45000);

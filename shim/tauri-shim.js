@@ -48,12 +48,12 @@
       case "inner_size": case "outer_size": return { width: innerWidth, height: innerHeight };
       case "inner_position": case "outer_position": return { x: 0, y: 0 };
       case "current_monitor": case "primary_monitor": return { name: "Desktop", size: { width: screen.width, height: screen.height }, position: { x: 0, y: 0 }, scaleFactor: 1 };
-      case "available_monitors": return [];
+      case "available_monitors": case "get_all_windows": return [];
       default: return null;
     }
   };
 
-  const invoke = async (cmd, args = {}) => {
+  const invoke = async (cmd, args = {}, options) => {
     if (cmd === "plugin:event|listen") {
       const id = evId++;
       if (!listeners.has(args.event)) listeners.set(args.event, new Map());
@@ -63,12 +63,13 @@
     if (cmd === "plugin:event|unlisten") { listeners.get(args.event)?.delete(args.eventId); return null; }
     if (cmd === "plugin:event|emit" || cmd === "plugin:event|emit_to") { P.emit(args.event, args.payload); return null; }
     if (cmd.startsWith("plugin:window|")) return winCmd(cmd.slice(14), args);
-    if (cmd.startsWith("plugin:webview|")) return null;
+    // Webview-Befehle (weitere Fenster) beantwortet nur ein Programm, das sie ausdrücklich anbietet (Folio); sonst bleiben sie leer
+    if (cmd.startsWith("plugin:webview|")) return Object.prototype.hasOwnProperty.call(P.handlers, cmd) ? P.handlers[cmd](args, options) : null;
     if (cmd === "plugin:app|version") return P.version || "0.0.0";
     if (cmd === "plugin:app|name") return P.name || "App";
     if (cmd === "plugin:opener|open_url" || cmd === "plugin:shell|open") { window.open(args.url || args.path, "_blank", "noopener"); return null; }
     const h = P.handlers[cmd];
-    if (h) return h(args);
+    if (h) return h(args, options);
     if (cmd.startsWith("plugin:")) return null;
     console.warn("[shim] nicht behandelt:", cmd, args);
     return null;

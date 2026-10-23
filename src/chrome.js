@@ -110,7 +110,7 @@ const lt = (s) => (s.icon ? `<div class="lt"><img src="${esc(s.icon)}" alt="" dr
 const card = (s) => `<button class="lcard" type="button" data-site="${esc(s.id)}">${lt(s)}<div><b>${esc(s.name)}</b><span>${esc(s.sub)}</span>${s.note ? `<i>${esc(s.note)}</i>` : ""}</div></button>`;
 
 /** Willkommen: kurze Einführung und alle Programme als Kacheln */
-export function buildWelcome(body, openApp, openLearn) {
+export function buildWelcome(body, openApp, openLearn, openCourtflow) {
   body.style.overflow = "auto";
   body.innerHTML = `
     <div class="welcome">
@@ -121,6 +121,7 @@ export function buildWelcome(body, openApp, openLearn) {
       </div>
       <div class="w-grid">
         ${APPS.map((a) => `<button class="w-app" data-app="${a.id}" type="button"><img src="${a.icon}" alt=""><div><b>${esc(a.name)}</b><span>${esc(a.tag)}</span></div></button>`).join("")}
+        <button class="w-app" data-courtflow type="button"><img src="assets/icons/courtflow.png" alt=""><div><b>CourtFlow</b><span>Übungsbibliothek Jugendbasketball U8–U18</span></div></button>
         <button class="w-app" data-learn type="button"><div class="wl" style="${tile(205)}">${I.book}</div><div><b>Lernseiten</b><span>Klausur-Trainer, Videos, Lernkarten</span></div></button>
       </div>
       <p class="w-note">Tipp: Fahr mit der Maus an den oberen Rand – dort sitzt die Notch. Fenster lassen sich ziehen, in der Größe ändern und minimieren.</p>
@@ -144,6 +145,7 @@ export function buildWelcome(body, openApp, openLearn) {
   body.addEventListener("click", (e) => {
     const a = e.target.closest("[data-app]");
     if (a) return openApp(byId(a.dataset.app));
+    if (e.target.closest("[data-courtflow]")) return openCourtflow();
     if (e.target.closest("[data-learn]")) openLearn();
   });
 }

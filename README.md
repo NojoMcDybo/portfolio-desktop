@@ -1,6 +1,6 @@
 # Nojo – Desktop-Portfolio
 
-Mein Portfolio ist ein Desktop im Browser. Die Seite bleibt gerade, liegt aber zuerst hinter einem Diffusor-Glas, das um seine untere Kante aufklappt: Je weiter ein Punkt vom Scharnier entfernt ist, desto stärker wird er gestreut. Ein Balken auf 60 % der Höhe verkleinert den Kippwinkel, bis alles scharf ist. Dann liegen dort meine Programme im Dock: **Arena**, **Vantage**, **Notch**, **Haze**, **Streamdock**, **Kursbuch** und der **nebel.-Simulator**, dazu der Ordner **Lernseiten** mit meinen Klausur-Trainern. Oben sitzt die Notch.
+Mein Portfolio ist ein Desktop im Browser. Die Seite bleibt gerade, liegt aber zuerst hinter einem Diffusor-Glas, das um seine untere Kante aufklappt: Je weiter ein Punkt vom Scharnier entfernt ist, desto stärker wird er gestreut. Ein Balken auf 60 % der Höhe verkleinert den Kippwinkel, bis alles scharf ist. Dann liegen dort meine Programme im Dock: **Arena**, **Vantage**, **Notch**, **Haze**, **Streamdock**, **Kursbuch**, **Folio**, **CourtFlow** und der **nebel.-Simulator**, dazu der Ordner **Lernseiten** mit meinen Klausur-Trainern. Oben sitzt die Notch.
 
 **Hintergrund:** Eine hohe Marmorhalle mit Oberlicht und einem riesigen Baum in der Mitte, in echter Tiefe (WebGL 2, `src/wallpaper.js`): Das Licht fällt durchs Oberlicht, bildet Strahlen in der Luft und vom Laub gefleckte Lichtflecken auf dem Boden. Gezeichnet ist alles im *Surface-Stable Fractal Dithering* von Rune Skovbo Johansen ([Dither3D](https://github.com/runevision/Dither3D), MPL-2.0): Die Rasterpunkte haften an den Oberflächen und bleiben auf dem Bildschirm gleich groß, auch wenn sich Ebenen gegeneinander verschieben. Der Shader (`src/wallpaper-shaders.js`) ist eine eigene Umsetzung des beschriebenen Verfahrens, kein übernommener Code. Wind bewegt Äste und Laub, Vögel sitzen und fliegen durch die Halle, Sonne, Mond, Sterne und Licht (durchs Oberlicht) folgen Datum und Uhrzeit (`src/daylight.js`, Mitteleuropa). Der Blick durchs „Fenster“ folgt der Maus oder, nur auf Klick unter *Hintergrund → Kopf folgen (Webcam)*, dem Kopf (`src/head.js`, Gesichtserkennung von [MediaPipe](https://github.com/google-ai-edge/mediapipe), Apache-2.0, lokal im Browser, es wird nichts gesendet; Code und Modell kommen erst beim Einschalten von jsDelivr und Google Storage). Die Idee der Tiefenschichten stammt aus meinem Schichtenwald-Prototyp. Unter *Hintergrund* lassen sich außerdem Tageszeit (live, Morgen bis Nacht, Zeitraffer), Wind und Tiefe wählen. Ohne WebGL 2 bleibt der farbige Verlauf; „Bewegung reduzieren“ im System zeigt ein Standbild.
 
@@ -21,7 +21,7 @@ Kein Framework: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-M
 | `shim/` | Tauri-Attrappe (`tauri-shim.js`) und je Programm die Beispiel-Antworten (`app-*.js`) |
 | `tools/` | `build-apps.mjs` baut die Oberflächen aus den Programm-Repos, `serve.py` ist ein Entwicklungs-Server ohne Cache |
 
-**Echte Oberflächen:** Arena, Kursbuch und Streamdock (Tauri) sowie Haze (Electron) sind die echten Oberflächen der Programme. `tools/build-apps.mjs` baut sie mit ihrem eigenen vite nach `apps/<name>/`. Die Programme sprechen über `window.__TAURI_INTERNALS__` mit ihrem Rust-Teil; hier beantwortet `shim/tauri-shim.js` dieselben Aufrufe mit Beispieldaten und gibt Fensterbefehle (schließen, minimieren, ziehen) an den Desktop weiter. Alle Daten sind erfunden: Vereine, Kurse, Kanäle, Termine.
+**Echte Oberflächen:** Arena, Kursbuch, Streamdock und Folio (Tauri) sowie Haze (Electron) sind die echten Oberflächen der Programme. `tools/build-apps.mjs` baut sie mit ihrem eigenen vite nach `apps/<name>/`. Die Programme sprechen über `window.__TAURI_INTERNALS__` mit ihrem Rust-Teil; hier beantwortet `shim/tauri-shim.js` dieselben Aufrufe mit Beispieldaten und gibt Fensterbefehle (schließen, minimieren, ziehen) an den Desktop weiter. Alle Daten sind erfunden: Vereine, Kurse, Kanäle, Termine.
 
 **Notch:** Die Notch oben auf dem Desktop und ihr Einstellungsfenster sind die echten Oberflächen aus dem Notch-Repo (`apps/notch`: `index.html` = Notch in einem durchsichtigen Vollbild-iframe, `settings.html` = Einstellungen). Ihre „Rust-Seite“ ist `src/notch-backend.js` (Musik, Blutzucker, Puls, Sport, Timer/Pomodoro, Ablage, Einstellungen mit den Datenformen der echten App), `src/notch-host.js` meldet, ob der Zeiger über der Form liegt (in der echten App fragt Rust die Maus ab). Sie klappt nur auf, wenn man mit der Maus darüberfährt – nicht beim Öffnen der Seite und nicht bei Toren.
 
@@ -29,7 +29,9 @@ Kein Framework: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-M
 
 **Nachbau:** Nur *Vantage* (Quellcode privat) ist von Hand geschrieben (`apps/vantage`): eigener Code, der die Oberfläche der App nachzeichnet (Pro mit Live, Spielplan, Pokal, Teams; Ich; Studio mit Clip-Editor) mit erfundener Welt aus Ligen, Teams, Spielern und Ergebnissen (`world.js`). Schriften: Cinzel, Source Sans 3, Saira Semi Condensed (SIL OFL 1.1, Lizenzen in `apps/vantage/fonts/`). Champion- und Item-Bilder lädt die Seite zur Laufzeit aus Riots Data Dragon; fehlen sie, zeigt die Seite Kürzel.
 
-**Lernseiten und Simulator** sind die echten Seiten auf GitHub Pages, eingebettet in ein Fenster; nichts davon ist kopiert.
+**Folio:** PDF-Reader mit [PDF.js](https://mozilla.github.io/pdf.js/) (Mozilla, Apache-2.0) und Glas-Oberfläche. `shim/app-folio.js` erzeugt drei erfundene Beispiel-PDFs selbst (Text, Formen, Lesezeichen), öffnet jedes Dokument in einem eigenen Fenster, nimmt eigene PDFs per Auswahl oder Drag-and-drop an (sie bleiben im Browser) und meldet die geöffnete Seite samt Suchstand an die Notch. „Sichern“ gilt in der Demo nur im Speicher.
+
+**Lernseiten, CourtFlow und Simulator** sind die echten Seiten auf GitHub Pages, eingebettet in ein Fenster; nichts davon ist kopiert.
 
 ## Lokal ansehen
 
@@ -37,7 +39,7 @@ Kein Framework: Der Desktop ist handgeschriebenes HTML, CSS und JavaScript (ES-M
 python tools/serve.py
 ```
 
-Dann `http://127.0.0.1:4173/` öffnen. Hilfreiche Parameter: `?skip=1` überspringt das Intro, `?open=arena` öffnet ein Programm sofort (`arena`, `vantage`, `notch`, `haze`, `streamdock`, `kursbuch`, `learn`, `nebel`; `open=none` öffnet nichts). Für den Hintergrund: `?zeit=morgen|mittag|abend|daemmerung|nacht|zeitraffer|HH:MM`, `?wind=0..2`, `?head=x,y` (Kopf festhalten, −1..1), `?wp=off` (ohne WebGL-Hintergrund), `?debug` (macht `window.__wp` verfügbar).
+Dann `http://127.0.0.1:4173/` öffnen. Hilfreiche Parameter: `?skip=1` überspringt das Intro, `?open=arena` öffnet ein Programm sofort (`arena`, `vantage`, `notch`, `haze`, `streamdock`, `kursbuch`, `folio`, `courtflow`, `learn`, `nebel`; `open=none` öffnet nichts). Für den Hintergrund: `?zeit=morgen|mittag|abend|daemmerung|nacht|zeitraffer|HH:MM`, `?wind=0..2`, `?head=x,y` (Kopf festhalten, −1..1), `?wp=off` (ohne WebGL-Hintergrund), `?debug` (macht `window.__wp` verfügbar).
 
 Oberflächen neu bauen (setzt die Quell-Repos unter `D:\Dev` voraus, Pfad per `DEV_ROOT` änderbar):
 
