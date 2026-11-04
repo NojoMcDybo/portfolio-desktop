@@ -317,14 +317,45 @@ export function standingsOf(tournamentId) {
   const list = teams.length ? teams : TEAMS.slice(0, 6);
   const ranked = [...list].sort((a, b) => RECORDS[b.key][0] - RECORDS[a.key][0] || a.name.localeCompare(b.name));
   const rankings = ranked.map((t, i) => ({ ordinal: i + 1, teams: [mkTeam(t.key, 0, "", RECORDS[t.key])] }));
-  const q = ranked.slice(0, 4);
   const mk = (id, a, b, state, wa, wb) => ({ id, state, teams: [mkTeam(a.key, wa, state === "completed" ? (wa > wb ? "win" : "loss") : ""), mkTeam(b.key, wb, state === "completed" ? (wb > wa ? "win" : "loss") : "")], previous: [] });
-  const tbd = () => ({ ...mkTeam(q[0].key), name: "TBD", code: "TBD", slug: "tbd", image: "", wins: 0 });
-  const final = { id: "final", state: "unstarted", teams: [tbd(), tbd()], previous: ["sf1", "sf2"] };
-  return [
-    { name: "Hauptrunde", slug: "regular", sections: [{ name: "Tabelle", rankings, matches: [] }] },
-    { name: "Playoffs", slug: "playoffs", sections: [{ name: "Halbfinale und Finale", rankings: [], matches: [mk("sf1", q[0], q[3], "completed", 2, 1), mk("sf2", q[1], q[2], "inProgress", 1, 1), final] }] },
-  ];
+  const tbd = () => ({ ...mkTeam(ranked[0].key), name: "TBD", code: "TBD", slug: "tbd", image: "", wins: 0 });
+  const col = (title, ids, pool = "") => ({ title, pools: ids.map((i) => ({ title: pool, matches: [i], teams: [] })) });
+
+  // Playoffs als Turnierbaum: mit acht Teams ab dem Viertelfinale, sonst ab dem Halbfinale
+  const eight = ranked.length >= 8;
+  const pairs = eight ? [[0, 7, 2, 0], [3, 4, 1, 2], [1, 6, 2, 0], [2, 5, 2, 1]] : [];
+  const po = pairs.map(([a, b, wa, wb], i) => mk(`qf${i + 1}`, ranked[a], ranked[b], "completed", wa, wb));
+  // Halbfinale 1: Sieger der Viertelfinals 1 und 2 (ohne Viertelfinale die Plätze 1 und 4); Halbfinale 2 läuft gerade
+  po.push(mk("sf1", ranked[0], ranked[eight ? 4 : 3], "completed", 2, 1), mk("sf2", ranked[1], ranked[2], "inProgress", 1, 1));
+  po.push({ id: "final", state: "unstarted", teams: [tbd(), tbd()], previous: ["sf1", "sf2"] });
+  const n = po.length;
+  const columns = [...(eight ? [col("Viertelfinale", [0, 1, 2, 3])] : []), col("Halbfinale", [n - 3, n - 2]), col("Finale", [n - 1])];
+  const playoffs = { name: "Playoffs", slug: "playoffs", layout: { kind: "bracket", columns }, sections: [{ name: "Turnierbaum", rankings: [], matches: po }] };
+
+  // Weltpokal: Schweizer Phase (Töpfe nach Bilanz) statt Tabelle
+  if (slug !== "globalcup" || !eight) return [{ name: "Hauptrunde", slug: "regular", sections: [{ name: "Tabelle", rankings, matches: [] }] }, playoffs];
+  const sw = [];
+  const strength = (t) => RECORDS[t.key][0] + rng(`sw-${t.key}`)() * 2;
+  const play = (a, b) => { const aw = strength(a) >= strength(b); sw.push(mk(`sw${sw.length + 1}`, a, b, "completed", aw ? 1 : 0, aw ? 0 : 1)); return aw ? [a, b] : [b, a]; };
+  const run = (ts) => { const s = sw.length, res = []; for (let i = 0; i < ts.length; i += 2) res.push(play(ts[i], ts[i + 1])); return { won: res.map((r) => r[0]), lost: res.map((r) => r[1]), ids: res.map((_, i) => s + i) }; };
+  const r1 = run([0, 4, 1, 5, 2, 6, 3, 7].map((i) => ranked[i]));
+  const w = run(r1.won), l = run(r1.lost);
+  const hi = run(w.won), mid = run([w.lost[0], l.won[0], w.lost[1], l.won[1]]), lo = run(l.lost);
+  const pool = (title, r) => ({ title, matches: r.ids, teams: [] });
+  const swiss = { name: "Schweizer Phase", slug: "swiss", layout: { kind: "swiss", columns: [{ title: "Runde 1", pools: [pool("0–0", r1)] }, { title: "Runde 2", pools: [pool("1–0", w), pool("0–1", l)] }, { title: "Runde 3", pools: [pool("2–0", hi), pool("1–1", mid), pool("0–2", lo)] }] }, sections: [{ name: "Paarungen", rankings: [], matches: sw }] };
+  return [swiss, playoffs];
+}
+
+// Beschreibung je Team: erfundene Einleitung (im echten Programm kommt sie von Wikipedia)
+const CITIES = { aet: "Nordhafen", blw: "Schwarzwiese", emb: "Glutheim", gal: "Sturmfeld", irv: "Eisenau", krk: "Kaibrück", cin: "Aschenburg", drf: "Dünenstadt", frb: "Frostmark", how: "Wolfsgrund", jdc: "Jadehafen", lmu: "Lichtenfels" };
+const STYLES = ["frühen Druck auf die Seitenlinien", "geduldiges Spiel um die Drachen", "schnelle Wechsel zwischen den Lanes", "sauberes Teamfight-Timing", "gefährliche Überraschungspicks", "ruhige Vision-Kontrolle"];
+export function teamAbout(slug) {
+  const t = teamBy(slug);
+  if (!t) return null;
+  const r = rng(`about-${t.key}`);
+  const city = CITIES[t.key] ?? "Hauptstadt", year = 2012 + Math.floor(r() * 11), style = STYLES[Math.floor(r() * STYLES.length)];
+  const place = ["Meister", "Vizemeister", "Halbfinalist", "Viertelfinalist"][Math.floor(r() * 4)];
+  return { text: `${t.name} (${t.code}) ist ein erfundenes Team aus ${city}. Die Organisation wurde ${year} gegründet und tritt in der ${leagueBy(t.league).name} an. Bekannt ist das Team für ${style}; sein bestes Ergebnis war der Platz als ${place} der Herbst-Saison ${2020 + Math.floor(r() * 6)}.`, source: "Beispieltext, das Team ist erfunden" };
 }
 export function teamInfo(slug) {
   const t = teamBy(slug);
@@ -365,6 +396,28 @@ export const MY_GAMES = Array.from({ length: 14 }, (_, i) => {
   return { id: `m${i}`, champ, role, win, k, d: dth, a, cs: Math.round(150 + r() * 120), min: 22 + Math.floor(r() * 16), when: Date.now() - (i * 5 + 2 + Math.round(r() * 3)) * H, mode: pickFrom(r, ["Solo/Duo", "Solo/Duo", "Flex", "Normal"]), score: ["MVP", "ACE", "", "", ""][i % 5] };
 });
 
+// Power-Level: Goldwert der eigenen Werte je Minute in sechs Gruppen, dazu der Lane-Gegner (erfundene Kurven mit Sprüngen bei neuen Items)
+export const POWER_GROUPS = [["ad", "Angriffsschaden", "#d95926"], ["speed", "Tempo und Krit", "#3987e5"], ["hp", "Leben", "#c98500"], ["res", "Resistenzen", "#199e70"], ["ap", "Fähigkeitsstärke", "#9085e9"], ["other", "Sonstiges", "#d55181"]];
+const POWER_MIX = { top: [0.28, 0.1, 0.3, 0.2, 0.02, 0.1], jungle: [0.22, 0.14, 0.3, 0.2, 0.04, 0.1], mid: [0.1, 0.04, 0.18, 0.1, 0.5, 0.08], bottom: [0.42, 0.28, 0.1, 0.06, 0.02, 0.12], support: [0.06, 0.04, 0.3, 0.24, 0.2, 0.16] };
+const POWER_FOE = { top: "Garen", jungle: "LeeSin", mid: "Syndra", bottom: "Kaisa", support: "Lulu" };
+function powerLine(seed, role, dur, tilt, champion) {
+  const r = rng(seed), mix = POWER_MIX[role];
+  let jump = 0;
+  const frames = Array.from({ length: dur + 1 }, (_, t) => {
+    if (t > 0 && t % 5 === 0) jump += 420 + r() * 380; // ein weiteres Item
+    const total = (900 + 620 * t * (0.92 + 0.16 * r()) + jump) * tilt * (1 + 0.035 * Math.sin(t / 2.4 + seed.length));
+    const late = Math.min(1, t / 30); // später mehr Leben und Resistenzen, weniger Schaden
+    const w = mix.map((x, i) => x * (i === 2 || i === 3 ? 1 + 0.35 * late : i === 0 || i === 4 ? 1 - 0.2 * late : 1));
+    const s = w.reduce((a, b) => a + b, 0);
+    return { t, gold: w.map((x) => Math.round((total * x) / s)) };
+  });
+  return { champion, frames, ults: [6, 11, 16].filter((u) => u <= dur) };
+}
+function powerOf(g, role) {
+  const foe = POWER_FOE[g.role] === g.champ ? "Orianna" : POWER_FOE[g.role];
+  return { dur: g.min, me: powerLine(`pw-${g.id}`, g.role, g.min, g.win ? 1.04 : 0.95, g.champ), opp: powerLine(`pw-foe-${g.id}`, g.role, g.min, g.win ? 0.97 : 1.05, foe), role };
+}
+
 /** Spielverlauf eines eigenen Spiels: dein Team (blau, du in deiner Rolle) gegen ein erfundenes Gegnerteam */
 export function myGameDetail(id) {
   const g = MY_GAMES.find((x) => x.id === id);
@@ -378,6 +431,6 @@ export function myGameDetail(id) {
   const blue = { id: "t-me", slug: `__me${id}`, code: "", name: "Dein Team" }, red = { id: "t-foe", slug: `__foe${id}`, code: "", name: "Gegner" };
   const sc = gameScript(`my:${id}`, g.win ? "blue" : "red");
   const state = gameState(sc, blue, red, sc.L, id, g.when, true, { [role + 1]: g.champ });
-  return { game: g, state, script: sc, blue, red, mePid: role + 1 };
+  return { game: g, state, script: sc, blue, red, mePid: role + 1, power: powerOf(g, role) };
 }
 

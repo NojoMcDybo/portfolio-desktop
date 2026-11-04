@@ -2,7 +2,7 @@
 // das gewählte Spiel mit Anzeigetafel, Goldverlauf, Teams und Ticker. Spielplan, Turnier und Teams wie in der echten App.
 // Spoiler-frei (Einstellungen): Ergebnisse bleiben verborgen, bis man sie je Serie aufdeckt.
 import { gameView } from "./game.js";
-import { LEAGUES, allSeries, gameById, leagueBy, liveSeriesList, seriesById, standingsOf, teamInfo, tournamentsOf } from "./world.js";
+import { LEAGUES, allSeries, gameById, leagueBy, liveSeriesList, seriesById, standingsOf, teamAbout, teamInfo, tournamentsOf } from "./world.js";
 import { ROLE } from "./dd.js";
 import { card, countdown, dayName, dragScroll, el, faint, img, load, morph, q, sameDay, save, timeOf, toast, DAY } from "./ui.js";
 
@@ -150,6 +150,7 @@ function focusHead(s) {
     line.append(followBtn(t));
     info.append(el("b", "", t?.name || "TBD"), line);
     box.append(teamLogo(t, "logo fh-logo"), info);
+    if (t?.slug && t.slug !== "tbd") { box.classList.add("link"); box.title = `Teamseite von ${t.name}`; box.onclick = (e) => { if (!e.target.closest("button")) openTeam(t.slug); }; }
     return box;
   };
   const mid = el("div", "fh-mid");
@@ -207,7 +208,7 @@ function renderFocus() {
   } else if (g.state === "unstarted") out.push(faint("Dieses Spiel hat noch nicht begonnen."));
   else {
     const data = gameById(g.id);
-    out.push(...(data ? gameView(data, s) : [faint("Spieldaten laden …")]));
+    out.push(...(data ? gameView(data, s, openTeam) : [faint("Spieldaten laden …")]));
   }
   const hostKeep = host.scrollTop;
   morph(host, out);
@@ -299,8 +300,32 @@ function bracketRow(m) {
   };
   b.append(t(m.teams[0], 0), t(m.teams[1], 1));
   if (m.teams.every((x) => x.slug !== "tbd") && seriesById(m.id)) b.onclick = () => openSeries(m.id);
-  else b.onclick = () => toast("Diese Paarung ist noch nicht gespielt.");
+  else b.onclick = () => toast(m.state === "completed" ? "Zu dieser Paarung gibt es in der Demo keine Spiele." : "Diese Paarung ist noch nicht gespielt.");
   return b;
+}
+
+/** Phase als Turnierbaum: Spalten = Runden, darin Töpfe (Schweizer Phase: Bilanz) mit Paarungen. Spoiler-frei zeigt nur die erste Runde Ergebnisse. */
+function bracketBoard(st) {
+  const ms = st.sections[0]?.matches ?? [];
+  const open = showResult(tournamentId);
+  const board = el("div", `bk ${st.layout.kind}`);
+  st.layout.columns.forEach((col, ci) => {
+    const c = el("div", "bk-col");
+    c.append(el("h4", "bk-title", col.title));
+    for (const p of col.pools) {
+      const pool = el("div", "bk-pool");
+      if (p.title) pool.append(el("span", "bk-pool-t n-num", p.title));
+      for (const i of p.matches) {
+        const m = ms[i];
+        if (m && (open || ci === 0)) pool.append(bracketRow(m));
+        else pool.append(el("div", "brow bk-slot", m ? "verdeckt" : "offen"));
+      }
+      for (const t of open ? p.teams : []) { const row = el("button", "bk-team"); row.append(teamLogo(t), el("span", "", t.code || t.name)); row.onclick = () => openTeam(t.slug); pool.append(row); }
+      c.append(pool);
+    }
+    board.append(c);
+  });
+  return board;
 }
 
 function renderCup() {
@@ -318,6 +343,7 @@ function renderCup() {
   for (const st of stages) {
     const sc = el("section", "stage");
     sc.append(el("h3", "stage-name", st.name));
+    if (st.layout) { sc.append(bracketBoard(st)); out.push(sc); continue; }
     for (const sec of st.sections) {
       const c = card(sec.name, sec.rankings.length ? "Tabelle" : `${sec.matches.length} Paarungen`, "section");
       if (sec.rankings.length) {
@@ -325,7 +351,7 @@ function renderCup() {
         for (const r of sec.rankings) for (const t of r.teams) {
           const row = el("button", "rank-row");
           row.append(el("span", "rk-n n-num", r.ordinal), teamLogo(t), el("span", "rk-name", t.name), el("span", "rk-rec n-num", t.record && showResult(tournamentId) ? `${t.record[0]}–${t.record[1]}` : "–"));
-          row.onclick = () => { teamSlug = t.slug; setSub("teams"); renderTeams(); };
+          row.onclick = () => openTeam(t.slug);
           tbl.append(row);
         }
         c.append(tbl);
@@ -361,6 +387,22 @@ function renderTeams() {
   renderTeam();
 }
 
+/** Teamseite öffnen (aus Tabelle, Turnierbaum, Serienkopf oder Anzeigetafel) */
+export function openTeam(slug) {
+  if (!slug || slug === "tbd") return;
+  teamSlug = slug;
+  setSub("teams");
+}
+
+/** „Über das Team“: Einleitung mit Herkunft (im echten Programm aus Wikipedia) */
+function aboutCard(slug) {
+  const a = teamAbout(slug);
+  if (!a) return null;
+  const c = card("Über das Team", "Beispieltext", "team-about");
+  c.append(el("p", "ta-text", a.text), el("div", "ta-src faint", a.source));
+  return c;
+}
+
 function renderTeam() {
   const host = q(".teams-main", root());
   const t = teamSlug ? teamInfo(teamSlug) : null;
@@ -384,7 +426,7 @@ function renderTeam() {
   for (const st of stages) for (const sec of st.sections) for (const m of sec.matches) if (m.teams.some((x) => x.slug === t.slug)) list.append(bracketRow(m));
   if (!list.children.length) list.append(faint("Keine Paarungen in diesem Turnier.", "faint"));
   games.append(list);
-  host.replaceChildren(head, roster, games);
+  host.replaceChildren(head, ...[aboutCard(t.slug)].filter(Boolean), roster, games);
 }
 
 // ---------- Rahmen ----------

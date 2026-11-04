@@ -30,10 +30,10 @@ export const APPS = [
     name: "Vantage",
     tag: "Profispiele, eigene Partien, Clips",
     about:
-      "Eine eigenständige App für League of Legends: Profispiele live und im Rückblick, die eigene Partie mit Meisterschafts-Diagrammen, ein Clip-Studio zum Aufnehmen und Schneiden und ein Replay-Studio mit Regie-Ansicht neben dem Spiel.",
+      "Eine eigenständige App für League of Legends: Profispiele live und im Rückblick mit Turnierbaum und Teamseiten, die eigene Partie mit Power-Level- und Meisterschafts-Diagrammen, ein Clip-Studio zum Aufnehmen und Schneiden und ein Replay-Studio mit Regie-Ansicht neben dem Spiel.",
     try: [
-      "Unter „Pro“ ein Spiel öffnen – Goldverlauf, Tore der Karte und Teams im Überblick.",
-      "„Ich“ zeigt Meisterschaft und Verlauf deiner Partien als Diagramm.",
+      "Unter „Pro“ ein Spiel öffnen – Goldverlauf und Teams im Überblick; im Reiter „Turnier“ den Baum ansehen, ein Klick auf ein Team öffnet seine Seite.",
+      "„Ich“ → „Spiele“: ein Spiel wählen, die Power-Level-Grafik zeigt deine Stärke je Minute gegen den Lane-Gegner; „Aktualisieren“ lädt die Liste neu.",
       "Im „Studio“ Clips ansehen und Schnittmarken setzen.",
     ],
     demo: "Beispieldaten ohne Spielbilder. Vantage steht in keiner Verbindung zu Riot Games; der Quellcode ist privat.",
@@ -130,15 +130,15 @@ export const APPS = [
   {
     id: "folio",
     name: "Folio",
-    tag: "PDF-Reader mit Glas und Anmerkungen",
+    tag: "PDF-Reader und Werkstatt in Glas",
     about:
-      "Ein PDF-Reader für Windows: jedes Dokument in einem eigenen Fenster, die Bedienung schwebt in Glas über der Seite. Suche mit Trefferzähler, Inhaltsverzeichnis aus den Lesezeichen, Textmarker, Stift und Textfeld als echte PDF-Anmerkungen, Invertierung für den Abend. Die geöffnete Seite läuft in die Notch.",
+      "Ein PDF-Reader für Windows: jedes Dokument in einem eigenen Fenster, die Bedienung schwebt in Glas über der Seite. Suche mit Trefferzähler, Inhaltsverzeichnis, Textmarker, Stift und Textfeld als echte PDF-Anmerkungen, Invertierung für den Abend. Dazu eine kleine Werkstatt: Seiten umsortieren, löschen, drehen, zuschneiden und herauslösen, PDFs zusammenführen, Texterkennung, Unterschrift per Handy, Verkleinern und Schwarzweiß. Die geöffnete Seite läuft in die Notch.",
     try: [
-      "Einen Steckbrief meiner Lernseiten öffnen und mit Strg+F suchen; das Inhaltsverzeichnis stammt aus den Lesezeichen.",
-      "Taste M drücken und einen Satz markieren – ein Doppelklick auf die Anmerkung öffnet ihr Menü.",
-      "Strg+I kehrt die Seite um; eine eigene PDF lässt sich auf das Fenster ziehen.",
+      "Einen Steckbrief meiner Lernseiten öffnen, mit Strg+F suchen und mit Strg+B die Seitenleiste herausziehen.",
+      "In der Seitenleiste Miniaturen ziehen, um Seiten umzusortieren; Entf löscht, Strg+Z nimmt zurück, K zeigt den Kontaktbogen.",
+      "Taste M drücken und einen Satz markieren; mit Strg+Umschalt+U unterschreiben („Hier zeichnen“).",
     ],
-    demo: "Als Beispiele dienen PDF-Steckbriefe meiner sieben Lernseiten. Eigene PDFs bleiben im Browser, „Sichern“ gilt hier nur im Speicher.",
+    demo: "Als Beispiele dienen PDF-Steckbriefe meiner Lernseiten. Eigene PDFs bleiben im Browser, „Sichern“ gilt hier nur im Speicher. Drehen, Zuschneiden, Texterkennung, Unterschrift am Handy und Verkleinern rechnet die installierte App.",
     repo: "folio",
     stack: "Tauri 2 · Rust · TypeScript · PDF.js",
     size: [840, 540],
@@ -203,7 +203,7 @@ export const LEARN = [
 ].map((s) => ({ ...s, url: `https://nojomcdybo.github.io/${s.id}/`, repo: s.id, size: [1100, 780] }));
 
 export const MORE = [
-  { id: "fogylation", name: "nebel.", sub: "Diabetes-Alltagssimulator für Angehörige · Bildungsprojekt, kein Medizinprodukt", hue: 215 },
+  { id: "nebel", name: "nebel.", sub: "Diabetes-Alltagssimulator für Angehörige · Bildungsprojekt, kein Medizinprodukt", hue: 215 },
   { id: "gedichte-galaxie", name: "Gedichte-Galaxie", sub: "321 Gedichte als begehbare Galaxie", hue: 285 },
   { id: "courtflow", name: "CourtFlow", sub: "Übungsbibliothek Jugendbasketball U8–U18", hue: 35 },
   { id: "Hooptrack", name: "HoopTrack", sub: "Basketball-Tracking im Browser", hue: 12 },

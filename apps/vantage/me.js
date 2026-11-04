@@ -2,6 +2,7 @@
 // Mastery: Kennzahlen, Blasen (antippen), Verteilung nach Klasse, Fortschritt zum nächsten Level, Verlauf. Spiele: Bilanz, Spielverlauf und die Spielansicht.
 import { champByKey, champImg, champName, champTags, CLASS, iconImg, itemImg, itemName } from "./dd.js";
 import { gameView } from "./game.js";
+import { powerCard } from "./power.js";
 import { ME, MASTERY, MASTERY_HISTORY, MY_GAMES, myGameDetail } from "./world.js";
 import { card, clock, dayName, el, faint, img, kilo, load, nf, pct, q, save, timeOf, toast, DAY } from "./ui.js";
 
@@ -10,7 +11,7 @@ const TIER_COLOR = { IRON: "#8d8079", BRONZE: "#b5764f", SILVER: "#a9b4bd", GOLD
 const PANES = [["over", "Übersicht"], ["games", "Spiele"], ["mastery", "Mastery"], ["notes", "Notizen"]];
 const QUEUES = [["all", "Alle"], ["Solo/Duo", "Solo/Duo"], ["Flex", "Flex"], ["Normal", "Normal"]];
 let pane = load("me", { pane: "over" }).pane;
-let queue = "all", openId = "";
+let queue = "all", openId = "", refreshing = false;
 let notes = load("notes", { list: [{ champ: "Ahri", text: "Gegen Zed: Zauberschild nach seinem R, nicht davor. Früh Wellen schieben und Jungle-Wege merken." }] }).list;
 let draft = { champ: "Ahri", text: "" };
 
@@ -257,6 +258,14 @@ function matchRow(g) {
 
 function historyList() {
   const c = card("Spielverlauf", "", "pf-hist");
+  // „Aktualisieren“ holt die Liste neu (im echten Programm an Riots Zwischenspeicher vorbei); die Demo hat nie ein neues Spiel
+  const reload = el("button", "imp pf-refresh", refreshing ? "Aktualisiert …" : "Aktualisieren");
+  reload.disabled = refreshing;
+  reload.onclick = () => {
+    refreshing = true; render();
+    setTimeout(() => { refreshing = false; render(); toast("Kein neues Spiel. Ein gerade beendetes Spiel erscheint oft erst nach ein paar Minuten – dann noch einmal aktualisieren."); }, 900);
+  };
+  c.querySelector(".c-head").append(reload);
   const f = el("div", "n-seg small pf-filter");
   for (const [v, label] of QUEUES) { const b = el("button", v === queue ? "active" : "", label); b.onclick = () => { queue = v; render(); }; f.append(b); }
   c.append(f);
@@ -298,6 +307,7 @@ function detailView() {
   if (!d) return [];
   const s = { teams: [{ id: d.blue.id, name: "Dein Team", code: "Dein Team", image: "" }, { id: d.red.id, name: "Gegner", code: "Gegner", image: "" }], league_name: "", league_image: "" };
   const out = [...gameView(d.state, s)];
+  out.push(powerCard(d.power));
   const h = card(d.game.win ? "Sieg" : "Niederlage", "Alle Werte", `pf-detail ${d.game.win ? "win" : "loss"}`);
   h.append(teamTable(d, "blue"), teamTable(d, "red"));
   out.push(h);

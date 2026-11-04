@@ -4,7 +4,7 @@
    Desktop. Die geöffnete Seite läuft in die Notch. */
 (() => {
   const P = window.__PORTFOLIO__;
-  P.version = "0.8.4";
+  P.version = "0.13.0";
   P.name = "Folio";
 
   const top = (() => { try { return window.top.document && window.top; } catch { return window; } })();
@@ -105,6 +105,11 @@
 
   // ---------- Befehle ----------
   let warned = false;
+  // Rust nimmt Pfad und Namen hexadezimal im Kopf „x-path“ / „x-name“ entgegen (Bytes im Rumpf)
+  const unhex = (h) => new TextDecoder().decode(Uint8Array.from(String(h ?? "").match(/../g) ?? [], (x) => parseInt(x, 16)));
+  const pathIn = (options) => unhex(options?.headers?.["x-path"]);
+  const keep = (dir, bytes, options) => { const path = dir + unhex(options?.headers?.["x-name"]); store.set(path, new Uint8Array(bytes)); return path; };
+  const no = (text) => Promise.reject(text); // Rust meldet Fehler als Text, die Oberfläche zeigt ihn an
   P.handlers = {
     read_pdf: async ({ path }) => {
       const b = await bytesOf(path);
@@ -112,14 +117,42 @@
       return b.slice().buffer;
     },
     save_pdf: (bytes, options) => {
-      const hex = options?.headers?.["x-path"] ?? "";
-      const path = new TextDecoder().decode(Uint8Array.from(hex.match(/../g) ?? [], (h) => parseInt(h, 16)));
+      const path = pathIn(options);
       store.set(path, new Uint8Array(bytes));
       if (!warned) { warned = true; toast("Gesichert – in dieser Demo bleibt die Datei im Speicher des Browsers."); }
       return null;
     },
     recycle_pdf: ({ path }) => { store.delete(path); return null; },
     startup_file: () => null,
+    // Ab 0.9: Drehen und Zuschneiden, Verkleinern, Texterkennung und Unterschrift am Handy rechnet Rust (lopdf, Windows-OCR, kleiner Webserver).
+    // Hier gibt es dafür nur eine freundliche Absage; Lesen, Suchen, Markieren, Seiten löschen, verschieben, herauslösen und „Hier zeichnen“
+    // laufen im Browser (PDF.js baut die Seiten selbst um).
+    pdf_edit: () => no("Seiten drehen und zuschneiden geht nur in der installierten App."),
+    pdf_optimize: () => no("Verkleinern und Umwandeln geht nur in der installierten App."),
+    pdf_embed_text: () => no("Erkannten Text einbetten geht nur in der installierten App."),
+    ocr_page: () => ({ lang: "de", lines: [] }), // keine Texterkennung im Browser: die Seite bleibt, wie sie ist
+    sign_start: () => no("Den QR-Code für das Handy gibt es nur in der installierten App – „Hier zeichnen“ geht auch hier."),
+    sign_status: () => "pending",
+    sign_take: () => no("Keine Unterschrift vom Handy."),
+    sign_stop: () => null,
+    "plugin:drag|start_drag": () => { toast("Seiten aus dem Fenster ziehen geht nur in der installierten App."); return null; },
+    read_pdf_plain: async ({ path }) => {
+      const b = await bytesOf(path);
+      if (!b) throw new Error("Datei nicht gefunden: " + path);
+      return b.slice().buffer;
+    },
+    // Dateien entstehen nur im Speicher; „Sichern unter“ lädt die Kopie herunter
+    temp_file: (bytes, options) => keep("Folio-Ablage\\", bytes, options),
+    library_pdf: (bytes, options) => keep("Folio\\", bytes, options),
+    adopt_temp_pdf: ({ path }) => path,
+    write_pdf_copy: (bytes, options) => {
+      const name = pathIn(options).split(/[\\/]/).pop() || "Folio.pdf";
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([bytes], { type: "application/pdf" })), download: name });
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      return null;
+    },
+    "plugin:dialog|save": ({ options: o = {} }) => "Heruntergeladen\\" + (o.defaultPath || "Folio.pdf"),
     // Notch: das offene Dokument steht dort mit Seite; Folios Eintrag verschwindet beim Schließen des Fensters
     notch_send: ({ method, path, body }) => {
       const be = top.__notchBackend;

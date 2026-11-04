@@ -40,6 +40,7 @@ function scoreHeader(a, b, time, state, meta, center) {
   const band = el("div", "sh-band");
   const team = (t, s) => {
     const d = el("div", `sh-team ${s}${t.result ? ` ${t.result}` : ""}`);
+    if (t.open) { d.classList.add("link"); d.tabIndex = 0; d.setAttribute("role", "button"); d.title = `Teamseite von ${t.name}`; d.onclick = t.open; d.onkeydown = (e) => { if (e.key === "Enter") t.open(); }; }
     if (t.logo) d.append(img(t.logo, "logo sh-logo", t.name, t.code));
     const id = el("div", "sh-id");
     id.append(el("b", "sh-code", t.code || t.name));
@@ -295,7 +296,7 @@ function ticker(c) {
 }
 
 /** Inhalt des Spiels: Anzeigetafel, Spieler, Vergleich und Ticker, Goldverlauf — in Wappenfarben */
-export function gameView(g, s) {
+export function gameView(g, s, openTeam) {
   const byId = new Map(s.teams.map((t) => [t.id, t]));
   const teamOf = (side) => byId.get(side === "blue" ? g.blue.team_id : g.red.team_id);
   const all = [...g.blue.players, ...g.red.players];
@@ -309,7 +310,7 @@ export function gameView(g, s) {
   const lead = g.blue_totals.gold - g.red_totals.gold;
   const res = (side) => (g.winner ? (g.winner === side ? "win" : "loss") : "");
   const [B, R] = [g.blue_totals, g.red_totals];
-  const side = (t, x, sd) => ({ name: t?.name ?? (sd === "blue" ? "Blau" : "Rot"), code: code(sd), logo: t?.image, result: res(sd), kills: x.kills, gold: x.gold, towers: x.towers, dragons: x.dragons, barons: x.barons, inhibs: x.inhibitors });
+  const side = (t, x, sd) => ({ name: t?.name ?? (sd === "blue" ? "Blau" : "Rot"), code: code(sd), logo: t?.image, open: t?.slug && openTeam ? () => openTeam(t.slug) : undefined, result: res(sd), kills: x.kills, gold: x.gold, towers: x.towers, dragons: x.dragons, barons: x.barons, inhibs: x.inhibitors });
   const center = s.league_image ? img(s.league_image, "logo sh-league", s.league_name, "") : undefined;
   const head = scoreHeader(side(bt, B, "blue"), side(rt, R, "red"), g.clock, g.state === "in_game" ? "live" : "",
     `${lead === 0 ? "Gold ausgeglichen" : `${code(lead > 0 ? "blue" : "red")} +${kilo(Math.abs(lead))} Gold`}${g.patch ? ` · Patch ${g.patch}` : ""}`, center);

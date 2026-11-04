@@ -705,3 +705,32 @@ main { height: 100%; overflow-y: auto; padding: 78px var(--pad-x) 36px; }
 .tl2-head { position: absolute; z-index: 4; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); pointer-events: none; }
 .tl2-head::before { content: ""; position: absolute; top: 0; left: -5px; border: 6px solid transparent; border-top: 8px solid #fff; border-bottom: 0; }
 @media (max-width: 1150px) { .ed-main { grid-template-columns: minmax(0, 1fr); } .ed-side { max-height: none; border-left: 0; border-top: 1px solid var(--n-line); } }
+
+/* ---- 0.5.11: Turnierbaum, Team-Beschreibung, verknüpfte Teams, Power-Level ---- */
+.bk { display: flex; gap: 14px; overflow-x: auto; padding: 2px 2px 10px; }
+.bk-col { display: flex; flex-direction: column; flex: 1 0 224px; min-width: 224px; gap: 8px; }
+.bk-title { margin: 0 0 2px; font: 600 11px var(--n-font); letter-spacing: 0.1em; text-transform: uppercase; color: var(--n-faint); }
+.bk-pool { display: flex; flex-direction: column; justify-content: center; gap: 6px; flex: 1; }
+.bk.swiss .bk-pool { flex: 0 0 auto; padding: 8px; border-radius: 14px; background: rgba(255, 255, 255, 0.025); box-shadow: inset 0 0 0 1px var(--n-line); }
+.bk-pool-t { font-size: 11px; color: var(--n-faint); margin: 0 2px 2px; }
+.brow.bk-slot { align-items: center; padding: 12px 10px; font-size: 12px; color: var(--n-faint); opacity: 0.75; }
+.bk-team { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.035); box-shadow: inset 0 0 0 1px var(--n-line); font-size: 12.5px; }
+.bk-team:hover { background: rgba(255, 255, 255, 0.07); }
+.sh-team.link, .fh-team.link { cursor: pointer; border-radius: 14px; transition: background 0.2s; }
+.sh-team.link:hover, .fh-team.link:hover { background: rgba(255, 255, 255, 0.05); }
+.team-about .ta-text { margin: 0; line-height: 1.55; color: var(--n-dim); max-width: 70ch; }
+.team-about .ta-src { margin-top: 8px; font-size: 11.5px; }
+.pf-refresh { flex: none; }
+.pf-refresh:disabled { opacity: 0.6; cursor: default; }
+.pw { display: flex; flex-direction: column; gap: 8px; }
+.pw-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.pw-key { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 11.5px; background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--n-line); }
+.pw-key i { width: 9px; height: 9px; border-radius: 3px; }
+.pw-key.off { opacity: 0.45; }
+.pw-key.off span { text-decoration: line-through; }
+.pw-vs { margin-left: auto; font-size: 11.5px; }
+.pw-me { fill: none; stroke: rgba(255, 255, 255, 0.92); stroke-width: 1.8; stroke-linejoin: round; }
+.pw-opp { fill: none; stroke: rgba(255, 255, 255, 0.7); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.pw-ults { position: absolute; inset: 0 0 auto 0; height: 20px; pointer-events: none; }
+.pw-ult { position: absolute; top: 6px; transform: translateX(-50%); padding: 1px 5px; border-radius: 6px; font: 700 10px var(--n-font); color: #fff; background: rgba(0, 0, 0, 0.5); }
+.pw-pill { top: 30px; }

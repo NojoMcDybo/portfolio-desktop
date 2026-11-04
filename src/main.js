@@ -12,7 +12,7 @@ import { animate, stagger, springValue, lift, POP, SPRING } from "./motion.js";
 
 const $ = (s) => document.querySelector(s);
 const REPO = "https://github.com/NojoMcDybo/portfolio-desktop";
-const NEBEL = { ...MORE.find((m) => m.id === "fogylation"), name: "nebel. Simulator", icon: "assets/icons/nebel.svg" };
+const NEBEL = { ...MORE.find((m) => m.id === "nebel"), name: "nebel. Simulator", icon: "assets/icons/nebel.svg" };
 const COURTFLOW = { ...MORE.find((m) => m.id === "courtflow"), name: "CourtFlow", icon: "assets/icons/courtflow.png" };
 
 const wm = new WM($("#windows"));

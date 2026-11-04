@@ -36,7 +36,7 @@ function openSettings() {
     return row;
   };
   const upd = el("div", "set-row upd-row"), ut = el("span", "set-txt");
-  ut.append(el("b", "", "Vantage 0.5.10"), el("span", "faint", "Aktuell. (Demo: die echte App sucht beim Start und alle 6 Stunden nach Updates.)"));
+  ut.append(el("b", "", "Vantage 0.5.11"), el("span", "faint", "Aktuell. (Demo: die echte App sucht beim Start und alle 6 Stunden nach Updates.)"));
   const ub = el("button", "n-btn", "Nach Updates suchen");
   ub.onclick = () => { ub.textContent = "Aktuell."; ub.disabled = true; };
   upd.append(ut, ub);
