@@ -2,7 +2,7 @@
    relativ zu heute, ein kleiner Suchbestand, Stundenplan, Fokus-Modus. Zugangsdaten werden nirgends gespeichert oder gesendet. */
 (() => {
   const P = window.__PORTFOLIO__;
-  P.version = "0.3.1";
+  P.version = "0.4.0";
   P.name = "Kursbuch";
 
   const SEM = "WiSe 2026/27";
@@ -145,6 +145,8 @@
   };
 
   const account = { saved: true, user: "demo", running: false };
+  let layout = { groups: [{ id: "g-sport", name: "Sport" }, { id: "g-eng", name: "Englisch" }], assign: { 101: "g-sport", 102: "g-sport", 103: "g-sport", 106: "g-sport", 104: "g-eng", 105: "g-eng" }, hidden: [] };
+  const settings = { ziel: "C:\\Users\\Demo\\Studium\\Kursbuch", mode: "mitgeliefert", data: "C:\\Users\\Demo\\AppData\\Roaming\\Kursbuch", obsidian: false };
 
   P.handlers = {
     overview: () => ({ status: "ok", error: null, last_run: now - 3 * 3600, courses: COURSES.map(card) }),
@@ -206,14 +208,40 @@
     },
     course_extras: ({ course: id }) => extras(id),
     open_url: ({ url }) => { window.open(url, "_blank", "noopener"); return null; },
-    update_state: () => ({ status: "current", current: "0.3.1" }),
-    update_check: () => ({ status: "current", current: "0.3.1" }),
+    update_state: () => ({ status: "current", current: "0.4.0" }),
+    update_check: () => ({ status: "current", current: "0.4.0" }),
     update_install: () => null,
     schedule_get: () => [
       { key: "104:2", course: 104, title: "Literature and Culture II", semester: SEM, weekday: 2, start: 10 * 60, end: 12 * 60, room: "HS 4", confidence: "hoch", source: "Sitzungstermine", sessions: 6 },
       { key: "106:3", course: 106, title: "Übung: Statistik für Sportwissenschaft", semester: SEM, weekday: 3, start: null, end: null, room: null, confidence: "mittel", source: "Sitzungstermine", sessions: 4 },
     ],
     schedule_dismiss: () => null,
+    // Kursgruppen und ausgeblendete Kurse (nur Ansicht, Layout in kursbuch/src/api.ts)
+    layout_get: () => layout,
+    layout_set: ({ layout: l }) => {
+      const groups = [], seen = new Set();
+      for (const g of l?.groups ?? []) { const id = String(g.id ?? ""), name = String(g.name ?? "").trim().slice(0, 40); if (id && name && !seen.has(id)) { seen.add(id); groups.push({ id, name }); } }
+      const assign = {};
+      for (const [k, v] of Object.entries(l?.assign ?? {})) if (seen.has(v)) assign[k] = v;
+      layout = { groups, assign, hidden: [...new Set((l?.hidden ?? []).map(Number).filter(Number.isInteger))] };
+      return layout;
+    },
+    // Kurs per LearnWeb-Link aufnehmen: in der Demo entsteht ein erfundener Kurs mit dieser Nummer
+    course_add: ({ link }) => {
+      const id = Number(/[?&]id=(\d+)/.exec(String(link))?.[1]);
+      if (!id) throw new Error("Das sieht nicht nach einem LearnWeb-Link aus (…/course/view.php?id=…).");
+      let c = COURSES.find((x) => x.id === id);
+      if (!c) {
+        c = { id, title: `Eigener Kurs ${id}`, kind: "seminar", teacher: "Dozent*in (Demo)", hue: (id * 37) % 360 };
+        COURSES.push(c);
+        TOPICS[id] = ["Einführung", "Grundlagen", "Vertiefung", "Anwendung", "Abschluss"];
+      }
+      return { id, name: c.title };
+    },
+    suggestion_decide: ({ accept }) => { toast(accept ? "Termin übernommen (Demo)." : "Vorschlag verworfen."); return null; },
+    settings_get: () => settings,
+    settings_set_ziel: ({ ziel }) => { settings.ziel = String(ziel); toast("Ordner gemerkt – in der echten App landen die Kursdateien dort."); return null; },
+    open_ziel: () => { toast("Der Ordner öffnet sich im Explorer – nur in der echten App."); return null; },
     sync_start: () => {
       if (syncing) return false;
       syncing = true;

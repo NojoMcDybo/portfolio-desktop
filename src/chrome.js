@@ -1,11 +1,18 @@
 // Fußzeile mit Installer-Knopf, Info-Blatt, Willkommen-Fenster und Lernseiten-Übersicht.
 import { APPS, LEARN, MORE, OWNER, byId } from "./apps.js";
-import { release, fmtMb } from "./downloads.js";
+import { release, fmtMb, onMac } from "./downloads.js";
 import { I } from "./icons.js";
 import { h } from "./wm.js";
 import { animate, lift, reveal } from "./motion.js";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+/** Installer-Knöpfe eines Programms: nur Windows, oder (mit fallback.mac) Windows und Mac – der des Besuchers steht zuletzt und ist hervorgehoben */
+function installers(app) {
+  if (!app.fallback.mac) return [{ os: "win", label: "", primary: true }];
+  const win = { os: "win", label: "Windows" }, mac = { os: "mac", label: "Mac" };
+  return onMac ? [{ ...win }, { ...mac, primary: true }] : [{ ...mac }, { ...win, primary: true }];
+}
 
 /** Fußzeile eines Programmfensters: Name · Info · Quellcode · Installer (mit Version und Größe) */
 export function appFooter(app, win) {
@@ -15,12 +22,14 @@ export function appFooter(app, win) {
     <div class="wf-id"><img src="${app.icon}" alt=""><b>${esc(app.name)}</b><em class="demo-pill" title="${esc(app.demo)}">Demo</em><span>${esc(app.tag)}</span></div>
     <button class="wf-btn" data-act="info" type="button">${I.info}<span>Info</span></button>
     ${pub ? `<a class="wf-btn" href="https://github.com/${OWNER}/${app.repo}" target="_blank" rel="noopener">${I.code}<span>Quellcode</span></a>` : ""}
-    <a class="wf-btn primary" data-act="dl" href="${app.fallback.url}" target="_blank" rel="noopener">${I.download}<span>Installer <small>v${app.fallback.version}</small></span></a>`;
-  const dl = f.querySelector('[data-act="dl"]');
+    ${installers(app).map((o) => `<a class="wf-btn${o.primary ? " primary" : ""}" data-act="dl" data-os="${o.os}" href="${app.fallback.url}" target="_blank" rel="noopener">${I.download}<span>Installer${o.label ? ` ${o.label}` : ""} <small>v${app.fallback.version}</small></span></a>`).join("")}`;
   release(app).then((r) => {
-    dl.href = r.url;
-    dl.querySelector("span").innerHTML = `Installer <small>v${esc(r.version)} · ${fmtMb(r.mb)}</small>`;
-    dl.title = `${app.name} ${r.version} für Windows herunterladen`;
+    for (const dl of f.querySelectorAll('[data-act="dl"]')) {
+      const mac = dl.dataset.os === "mac", g = mac ? r.mac : r;
+      dl.href = g.url;
+      dl.querySelector("span").innerHTML = `Installer${installers(app).length > 1 ? ` ${mac ? "Mac" : "Windows"}` : ""} <small>v${esc(r.version)} · ${fmtMb(g.mb)}</small>`;
+      dl.title = `${app.name} ${r.version} für ${mac ? "den Mac (Apple Silicon)" : "Windows"} herunterladen`;
+    }
   });
   f.querySelector('[data-act="info"]').onclick = () => toggleSheet(win, app);
   return f;
@@ -43,12 +52,12 @@ function toggleSheet(win, app) {
       <ul>${app.try.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
       <div class="demo">${esc(app.demo)}</div>
       <div class="sheet-actions">
-        <a class="wf-btn primary" data-dl href="${app.fallback.url}" target="_blank" rel="noopener">${I.download}<span>Installer für Windows</span></a>
+        ${installers(app).map((o) => `<a class="wf-btn${o.primary ? " primary" : ""}" data-dl="${o.os}" href="${app.fallback.url}" target="_blank" rel="noopener">${I.download}<span>Installer für ${o.os === "mac" ? "den Mac" : "Windows"}</span></a>`).join("")}
         ${pub ? `<a class="wf-btn" href="https://github.com/${OWNER}/${app.repo}" target="_blank" rel="noopener">${I.code}<span>Quellcode</span></a>` : ""}
         <a class="wf-btn" data-rel href="${app.fallback.url}" target="_blank" rel="noopener">${I.external}<span>Alle Versionen</span></a>
         <button class="wf-btn" data-close type="button"><span>Schließen</span></button>
       </div>
-      <div class="sheet-meta" data-meta>${esc(app.stack)} · nur Windows 10/11. Bei neuen Installern kann SmartScreen warnen („Weitere Informationen“ → „Trotzdem ausführen“).</div>
+      <div class="sheet-meta" data-meta>${esc(app.stack)} · ${esc(app.os ?? "nur Windows 10/11")}. ${esc(app.warn ?? "Bei neuen Installern kann SmartScreen warnen („Weitere Informationen“ → „Trotzdem ausführen“).")}</div>
     </div>`;
   const hide = () => animate(s, { opacity: 0 }, { duration: 0.15 }).then(() => { s.hidden = true; });
   s.addEventListener("click", (e) => { if (e.target === s || e.target.closest("[data-close]")) hide(); });
@@ -57,8 +66,11 @@ function toggleSheet(win, app) {
   animate(s, { opacity: [0, 1] }, { duration: 0.22 });
   animate(s.querySelector(".sheet-card"), { opacity: [0, 1], y: [22, 0], scale: [0.97, 1] }, { type: "spring", stiffness: 380, damping: 28 });
   release(app).then((r) => {
-    s.querySelector("[data-dl]").href = r.url;
-    s.querySelector("[data-dl] span").textContent = `Installer v${r.version} · ${fmtMb(r.mb)}`;
+    for (const dl of s.querySelectorAll("[data-dl]")) {
+      const mac = dl.dataset.dl === "mac", g = mac ? r.mac : r;
+      dl.href = g.url;
+      dl.querySelector("span").textContent = `Installer für ${mac ? "den Mac" : "Windows"} · v${r.version} · ${fmtMb(g.mb)}`;
+    }
     s.querySelector("[data-rel]").href = r.page;
   });
   s.querySelector("[data-close]").focus();

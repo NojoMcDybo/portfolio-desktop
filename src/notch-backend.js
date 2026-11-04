@@ -146,14 +146,39 @@ export function createNotchBackend({ toast = () => {} } = {}) {
 
   // ---------- Befehle ----------
   // Ohne eigene Wahl klappt die Notch bei Toren nicht auf (der Spielstand in der Mitte läuft trotzdem weiter); wer will, stellt es in den Einstellungen um
-  let settings = lsGet("settings", null) ?? { sport: { expand: "off" } }, cards = lsGet("cards", null), dock = lsGet("dock", "top");
+  let settings = lsGet("settings", null) ?? { sport: { expand: "off" }, share: { on: true } }, cards = lsGet("cards", null), dock = lsGet("dock", "top");
   let hit = { x: 0, y: 0, w: 0, h: 0 }, hover = false;
   const LEAGUES = [["bl1", "Nordliga", "Deutschland"], ["dfb", "Küstenpokal", "Deutschland"], ["test", "Testspiele", "Vereine"]].map(([id, name, group]) => ({ id, name, group, sport: "soccer", source: "Demo", auto: id === "test" }));
   const laya = { want: false, state: "off", done: 0, total: 307_000_000, message: "", dir: "" };
+  // ---------- iPhone-Austausch (share.rs, iphone.rs): Beispielzustand ----------
+  let autostart = false;
+  const phone = { paired: true, ntfy: true, sendto: true };
+  const shareOn = () => !!settings?.share?.on;
+  const shareState = () => ({
+    on: shareOn(), running: shareOn(), error: "", ip: "192.168.0.23", port: 53317, alias: "Notch · Demo-PC", folder: settings?.share?.folder || "C:\Users\Demo\Downloads\Notch",
+    devices: shareOn() ? [{ fp: "demo-ipad", alias: "iPad von Mira", model: "iPad", kind: "mobile", recent: true }] : [],
+    phone: shareOn() && phone.paired ? { name: "iPhone von Nojo", present: true, battery: 82, seen: null, ntfy: phone.ntfy ? "notch-demo" : null, sendto: phone.sendto } : null,
+  });
+  // Verbindungsanzeige für die aufgeklappte Notch und Meldung an die Einstellungen
+  const syncShare = () => {
+    const st = shareState();
+    emit("share-state", st);
+    if (st.phone) upsert({ id: "notch:iphone", app: "iPhone", title: st.phone.name, subtitle: `im WLAN · ${st.phone.battery} %`, value: String(st.phone.battery), unit: "%", color: "#0a84ff", icon: icon('<rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M11 18.500h2"/>', "#0a84ff"), priority: 0 });
+    else remove("notch:iphone");
+  };
+  // Platzhalter-QR-Code (sieht aus wie einer, führt nirgends hin)
+  const demoQr = (seed) => {
+    const n = 29, h = (x, y) => { let v = (x * 374761393 + y * 668265263 + seed.length * 2147483647) >>> 0; v = (v ^ (v >>> 13)) * 1274126177 >>> 0; return (v ^ (v >>> 16)) & 1; };
+    const finder = (x, y) => { const f = (ox, oy) => { const dx = x - ox, dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; return dx === 0 || dy === 0 || dx === 6 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4) ? 1 : 0; }; return f(0, 0) ?? f(n - 7, 0) ?? f(0, n - 7); };
+    let d = "";
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const fv = finder(x, y); const on = fv ?? h(x, y); if (on) d += `M${x} ${y}h1v1h-1z`; }
+    return { url: "https://example.org/notch-demo", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${n + 4} ${n + 4}"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`, minutes: 10 };
+  };
+
   const handlers = {
     snapshot: () => ({ media: media(), cover: coverOf(TRACKS[ti]), activities: [...acts.values()].sort((a, b) => b.priority - a.priority), shelf, clips: [], fullscreen: false, peek: false, hover, dock, voice_key: "Strg+Alt+Leertaste", sport: { ...sportState } }),
     settings_get: () => settings,
-    settings_set: ({ settings: s }) => { settings = s; lsSet("settings", s); emit("settings", s); return null; },
+    settings_set: ({ settings: s }) => { settings = s; lsSet("settings", s); emit("settings", s); syncShare(); return null; },
     cards_get: () => cards,
     cards_set: ({ cards: c }) => { cards = c; lsSet("cards", c); return null; },
     set_hit_rect: ({ rect }) => { hit = rect || hit; return null; },
@@ -192,8 +217,24 @@ export function createNotchBackend({ toast = () => {} } = {}) {
     reveal: () => { toast("Der Explorer öffnet sich nur in der installierten App."); return null; },
     open: ({ target }) => { if (/^https?:/.test(target || "")) window.open(target, "_blank", "noopener"); else toast("Das öffnet sich nur in der installierten App."); return null; },
     open_settings: (a) => { backend.onOpenSettings?.(a?.tab); return null; },
-    share_status: () => ({ on: false }),
-    share_qr: () => { throw "Der iPhone-Austausch gibt es nur in der installierten App."; },
+    // iPhone-Austausch (NotchDrop): der Schalter in den Einstellungen bestimmt, ob "geteilt" wird; ein gekoppeltes iPhone und ein iPad sind Beispiele
+    share_status: () => shareState(),
+    share_qr: () => demoQr("Notch-Austausch"),
+    share_offer: () => demoQr("Notch-Austausch"),
+    share_send: () => { toast("Zum Abholen bereitgelegt (Demo, es wird nichts übertragen)."); return null; },
+    iphone_setup: () => { setTimeout(() => { phone.paired = true; syncShare(); }, 5000); return demoQr("Notch-iPhone"); },
+    iphone_unpair: () => { phone.paired = false; syncShare(); return null; },
+    iphone_push: ({ on }) => { phone.ntfy = !!on; syncShare(); return null; },
+    iphone_sendto: ({ on }) => { phone.sendto = !!on; syncShare(); return null; },
+    iphone_offer: () => { toast("Auf dem iPhone zum Abholen bereitgelegt (Demo)."); return null; },
+    autostart_get: () => autostart,
+    autostart_set: ({ on }) => { autostart = !!on; return null; },
+    check_updates: () => { toast("Notch ist auf dem neuesten Stand (Demo)."); return null; },
+    memory_get: () => ({ namen: [], ablaeufe: [], discord: [], zuletzt: [] }),
+    voice_key_status: () => ({ source: "none", hint: null }),
+    claude_key_status: () => ({ source: "none", hint: null }),
+    keyboard: () => null,
+    clip_clear: () => null, clip_remove: () => null, clip_copy: () => null, clip_to_shelf: () => null,
     laya_status: () => laya,
     laya_install: () => laya,
     laya_uninstall: () => laya,
@@ -219,7 +260,7 @@ export function createNotchBackend({ toast = () => {} } = {}) {
     activity(a) { upsert({ priority: 0, ...a }, { ttl: 180 }); },
     removeActivity(id) { remove(id); },
     onOpenSettings: null, onDockDrag: null };
-  upsert(bgAct()); hrTick();
+  upsert(bgAct()); hrTick(); syncShare();
   setInterval(bgTick, 45000);
   setInterval(hrTick, 3000);
   setInterval(() => { if (playing) { if (position() >= TRACKS[ti].dur) { ti = (ti + 1) % TRACKS.length; pos = 0; posAt = now(); pushMedia(); } emit("level", clamp(0.35 + Math.random() * 0.6, 0, 1)); } }, 120);

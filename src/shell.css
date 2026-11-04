@@ -122,6 +122,8 @@ body.booting .wallpaper i { animation-play-state: paused; }
 /* ================= Fenster ================= */
 
 #windows { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+/* English Daily: durchsichtig über den Fenstern, unter Menüleiste und Dock; fängt die Maus nur innerhalb des per clip-path gesetzten Panel-Ausschnitts */
+.ed-overlay { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; z-index: 400; }
 .win { position: absolute; pointer-events: auto; display: flex; flex-direction: column; border-radius: 12px; background: var(--n-bg); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 30px 80px rgba(0, 0, 0, 0.55), 0 8px 22px rgba(0, 0, 0, 0.35);
   transform-origin: 50% 100%; contain: layout; }
 .win:not(.focused) { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 14px 40px rgba(0, 0, 0, 0.4); }

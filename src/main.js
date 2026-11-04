@@ -4,6 +4,7 @@ import { runIntro } from "./intro.js";
 import { WM, h } from "./wm.js";
 import { appFooter, siteFooter, buildLearn, buildWelcome } from "./chrome.js";
 import { createNotchHost } from "./notch-host.js";
+import { createOverlayHost } from "./overlay-host.js";
 import { initStreamdock } from "./streamdock-demo.js";
 import { I } from "./icons.js";
 import { S } from "./stage.js";
@@ -26,8 +27,12 @@ const notch = createNotchHost({
   },
 });
 
+// English Daily: kein Fenster, sondern ein durchsichtiges Overlay über dem Desktop (Dock-Punkt zeigt, ob es eingeblendet ist)
+const overlay = createOverlayHost({ toast: (t) => toast(t), onChange: () => paintDock() });
+
 // ---------- Fenster öffnen ----------
 function openApp(app) {
+  if (app.overlay) return overlay.show();
   return wm.open({
     // Programme mit eigener Fensterleiste (Tauri, rahmenlos) zeichnen sie selbst; Haze (Electron) bekommt hier eine
     key: app.id, title: app.name, mode: app.bar ? "bar" : "app", pad: app.bar ? 80 : 40, icon: app.icon, src: app.page, size: app.size, min: [560, 420], noScale: app.id === "notch",
@@ -64,6 +69,8 @@ for (const d of DOCK) {
   b.setAttribute("aria-label", d.name);
   b.innerHTML = `<span class="dk-in"><img src="${d.icon}" alt="" draggable="false"></span><span class="dk-label">${d.name}</span>`;
   b.addEventListener("click", () => {
+    // Overlay: der Klick blendet es ein oder aus
+    if (d.app?.overlay && overlay.on) return overlay.hide();
     const w = wm.get(d.key);
     if (!w) animate(b.querySelector("img"), { y: [0, -26, 0, -13, 0] }, { duration: 0.85, ease: "easeOut", times: [0, 0.32, 0.58, 0.8, 1] });
     // Lernseiten-Ordner: ist ein Seitenfenster offen, bringt der Klick es nach vorn, sonst die Übersicht
@@ -75,8 +82,9 @@ for (const d of DOCK) {
   });
   b.addEventListener("contextmenu", (e) => {
     e.preventDefault();
-    const m = [{ label: d.name, dis: true }, { label: "Öffnen", fn: d.open }];
-    if (d.app) m.push({ label: "Installer herunterladen", href: d.app.fallback.url }, ...(d.app.sourceRepo !== null ? [{ label: "Quellcode", href: `https://github.com/NojoMcDybo/${d.app.repo}` }] : []));
+    const m = [{ label: d.name, dis: true }, d.app?.overlay ? { label: overlay.on ? "Ausblenden" : "Einblenden", hint: "Strg+Alt+E", fn: overlay.toggle } : { label: "Öffnen", fn: d.open }];
+    const f = d.app?.fallback;
+    if (f) m.push(f.mac ? { label: "Installer für Windows", href: f.url } : { label: "Installer herunterladen", href: f.url }, ...(f.mac ? [{ label: "Installer für den Mac", href: f.mac.url }] : []), ...(d.app.sourceRepo !== null ? [{ label: "Quellcode", href: `https://github.com/NojoMcDybo/${d.app.repo}` }] : []));
     const w = wm.get(d.key);
     if (w) m.push({ sep: true }, { label: "Schließen", fn: () => wm.close(w) });
     menu(e.clientX / S.k, S.h - 90, m, true);
@@ -104,6 +112,7 @@ for (const d of DOCK) {
 wm.dockRect = (key) => { const r = items.get(dockKey(key))?.getBoundingClientRect(); return r ? { x: r.x / S.k, y: r.y / S.k, width: r.width / S.k, height: r.height / S.k } : null; };
 function paintDock() {
   const run = new Set(wm.all().map((w) => dockKey(w.key)));
+  if (overlay.on) run.add("english-daily");
   items.forEach((b, k) => b.classList.toggle("run", run.has(k)));
 }
 wm.on("change", () => { paintDock(); });

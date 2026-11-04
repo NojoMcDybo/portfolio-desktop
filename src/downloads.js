@@ -26,12 +26,20 @@ async function load(app) {
     const a = (j.assets || []).find((x) => /setup.*\.exe$/i.test(x.name));
     if (!a) throw new Error("kein Installer im Release");
     const v = { version: String(j.tag_name).replace(/^v/, ""), mb: a.size / 1e6, url: a.browser_download_url, page: j.html_url, date: j.published_at, live: true };
+    // Programme mit Mac-Installer (fallback.mac): das .dmg aus demselben Release
+    if (app.fallback.mac) {
+      const m = (j.assets || []).find((x) => /\.dmg$/i.test(x.name));
+      v.mac = m ? { mb: m.size / 1e6, url: m.browser_download_url } : app.fallback.mac;
+    }
     try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), v })); } catch {}
     return v;
   } catch {
     const f = app.fallback;
-    return { version: f.version, mb: f.mb, url: f.url, page: f.url, live: false };
+    return { version: f.version, mb: f.mb, url: f.url, page: f.url, live: false, mac: f.mac };
   }
 }
+
+/** Läuft der Besucher auf einem Mac? Dann ist dessen Installer der erste Knopf. */
+export const onMac = /Mac/i.test(navigator.userAgentData?.platform || navigator.platform || "");
 
 export const fmtMb = (mb) => `${mb >= 100 ? Math.round(mb) : mb.toFixed(1).replace(".", ",")} MB`;

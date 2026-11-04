@@ -44,7 +44,7 @@ export const APPS = [
     page: "apps/vantage/index.html",
     icon: "assets/icons/vantage.svg",
     accent: "#4da3ff",
-    fallback: { version: "0.5.5", mb: 4.7, url: "https://github.com/NojoMcDybo/vantage-releases/releases/latest" },
+    fallback: { version: "0.5.11", mb: 4.8, url: "https://github.com/NojoMcDybo/vantage-releases/releases/latest" },
   },
   {
     id: "notch",
@@ -64,7 +64,7 @@ export const APPS = [
     page: "apps/notch/settings.html",
     icon: "assets/icons/notch.png",
     accent: "#ffffff",
-    fallback: { version: "0.2.23", mb: 10.6, url: "https://github.com/NojoMcDybo/notch/releases/latest" },
+    fallback: { version: "0.2.27", mb: 10.7, url: "https://github.com/NojoMcDybo/notch/releases/latest" },
   },
   {
     id: "haze",
@@ -85,7 +85,7 @@ export const APPS = [
     bar: true,
     icon: "assets/icons/haze.png",
     accent: "#75b8ff",
-    fallback: { version: "1.15.0", mb: 112, url: "https://github.com/NojoMcDybo/Haze/releases/latest" },
+    fallback: { version: "1.15.0", mb: 117.6, url: "https://github.com/NojoMcDybo/Haze/releases/latest" },
   },
   {
     id: "streamdock",
@@ -125,7 +125,7 @@ export const APPS = [
     page: "apps/kursbuch/index.html",
     icon: "assets/icons/kursbuch.svg",
     accent: "#75b8ff",
-    fallback: { version: "0.3.1", mb: 3.4, url: "https://github.com/NojoMcDybo/kursbuch/releases/latest" },
+    fallback: { version: "0.4.0", mb: 24.7, url: "https://github.com/NojoMcDybo/kursbuch/releases/latest" },
   },
   {
     id: "folio",
@@ -145,7 +145,49 @@ export const APPS = [
     page: "apps/folio/index.html",
     icon: "assets/icons/folio.png",
     accent: "#9ac8ff",
-    fallback: { version: "0.8.4", mb: 219, url: "https://github.com/NojoMcDybo/folio/releases/latest" },
+    fallback: { version: "0.13.0", mb: 222.2, url: "https://github.com/NojoMcDybo/folio/releases/latest" },
+  },
+  {
+    id: "icastico",
+    name: "Icastico",
+    tag: "Notensatz als individuelle Workstation",
+    about:
+      "Notensatz zum schnellen Schreiben statt Suchen – für Gesang, Gitarre und Klavier, angelehnt an Finale, aber neu gedacht. Noten wie in Finale Simple Entry eingeben oder mit der Maus ziehen, neue Partitur mit Titel, Instrumenten, Tonart und Taktart, eigene Bibliothek mit Sammlungen und Papierkorb, Tastenbelegung Finale oder Logic Pro und Wiedergabe mit Instrumentenklängen. Open Source unter der GPL-3.0.",
+    try: [
+      "Strg+N legt eine neue Partitur an: Titel, Instrumente, Tonart, Taktart.",
+      "Enter startet die Eingabe: Zifferntasten wählen den Notenwert, C D E F G A H die Töne, 0 eine Pause. F1 zeigt alle Tasten.",
+      "Noten mit der Maus ziehen und mit der Transportleiste abspielen, das Tempo lässt sich ändern.",
+    ],
+    demo: "Die Bibliothek liegt hier nur im Speicher des Browsers: Dateien öffnest du per Auswahl und sicherst sie als Download. Die echte App legt sie in Dokumente/Icastico an und aktualisiert sich selbst. Klänge: MuseScore General (MIT).",
+    repo: "Icastico",
+    stack: "Tauri 2 · Rust · TypeScript · SoundFont",
+    size: [1300, 820],
+    page: "apps/icastico/index.html",
+    bar: true,
+    icon: "assets/icons/icastico.png",
+    accent: "#9ac8ff",
+    os: "Windows 10/11 und macOS (Apple Silicon)",
+    warn: "Die Installer sind noch nicht signiert: Windows zeigt SmartScreen („Weitere Informationen“ → „Trotzdem ausführen“), auf dem Mac öffnet man die App per Rechtsklick → „Öffnen“.",
+    fallback: { version: "0.9.0", mb: 39.5, url: "https://github.com/NojoMcDybo/Icastico/releases/latest", mac: { mb: 39.8, url: "https://github.com/NojoMcDybo/Icastico/releases/latest" } },
+  },
+  {
+    id: "english-daily",
+    name: "English Daily",
+    tag: "Englisch üben als Overlay auf dem Desktop",
+    about:
+      "Kleine tägliche Englisch-Aufgaben, die als schwebende Panels über dem ganzen Bildschirm liegen: durchsichtig, immer obenauf, und alles außerhalb der Panels bleibt klickbar. Die Panels lassen sich verschieben, docken aneinander an und klappen zu. Strg+Alt+E blendet das Overlay ein und aus; es läuft den ganzen Tag, ohne etwas zu kosten.",
+    try: [
+      "Eine Aufgabe im Panel „Task“ starten und beantworten.",
+      "Die Kopfzeile eines Panels ziehen: Panels, die sich berühren, docken an und bewegen sich gemeinsam. Doppelklick auf die Kopfzeile klappt es ein.",
+      "Strg+Alt+E blendet das Overlay aus und ein, auch bei geöffneten Fenstern.",
+    ],
+    demo: "Dies ist die echte Oberfläche des Overlays. Fenster und Tray, der Wechsel des Bildschirms und der Start mit Windows gibt es nur in der installierten App; Fortschritte bleiben hier im Browser.",
+    overlay: true,
+    sourceRepo: null,
+    stack: "Tauri 2 · Rust · JavaScript",
+    page: "apps/english-daily/index.html",
+    icon: "assets/icons/english-daily.png",
+    accent: "#0767d3",
   },
 ];
 

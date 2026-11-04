@@ -2,7 +2,7 @@
    Hauptfenster), die Ereignisse kommen von dort. Notch selbst (index.html) und Einstellungsfenster (settings.html) teilen sich dieses Backend. */
 (() => {
   const P = window.__PORTFOLIO__;
-  P.version = "0.2.23";
+  P.version = "0.2.27";
   P.name = "Notch";
   const top = window.top;
   const be = () => top.__notchBackend;
