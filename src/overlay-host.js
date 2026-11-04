@@ -32,7 +32,7 @@ export function createOverlayHost({ toast, onChange }) {
     frame.hidden = false;
     on = true;
     onChange?.(on);
-    if (!told) { told = true; toast("English Daily liegt als Overlay über dem Desktop (Strg+Alt+E blendet es aus und ein). Die Aufgaben sind Beispiele, die Fortschritte bleiben im Browser."); }
+    if (!told) { told = true; toast("English Daily liegt als Overlay über dem Desktop (Strg+Alt+E blendet es aus und ein). Die Aufgaben sind Beispiele, die Fortschritte bleiben im Browser. Installer und Quellcode: Rechtsklick auf das Dock-Symbol."); }
   };
   const hide = () => { if (frame) frame.hidden = true; on = false; onChange?.(on); };
   const toggle = () => (on ? hide() : show());

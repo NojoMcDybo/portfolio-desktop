@@ -183,11 +183,12 @@ export const APPS = [
     ],
     demo: "Dies ist die echte Oberfläche des Overlays. Fenster und Tray, der Wechsel des Bildschirms und der Start mit Windows gibt es nur in der installierten App; Fortschritte bleiben hier im Browser.",
     overlay: true,
-    sourceRepo: null,
+    repo: "english-daily",
     stack: "Tauri 2 · Rust · JavaScript",
     page: "apps/english-daily/index.html",
     icon: "assets/icons/english-daily.png",
     accent: "#0767d3",
+    fallback: { version: "1.0.0", mb: 1.3, url: "https://github.com/NojoMcDybo/english-daily/releases/latest" },
   },
 ];
 
