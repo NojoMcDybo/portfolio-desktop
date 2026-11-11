@@ -16,7 +16,7 @@ async function load(app) {
   const key = `rel:${app.repo}`;
   try {
     const c = JSON.parse(sessionStorage.getItem(key) || "null");
-    if (c && Date.now() - c.at < TTL) return c.v;
+    if (c && Date.now() - c.at < TTL && (!app.fallback.mac || c.v.mac)) return c.v; // ein älterer Eintrag ohne Mac-Installer zählt nicht
   } catch {}
   try {
     const r = await fetch(`https://api.github.com/repos/${OWNER}/${app.repo}/releases/latest`, { headers: { Accept: "application/vnd.github+json" } });
