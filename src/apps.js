@@ -49,7 +49,7 @@ export const APPS = [
   {
     id: "notch",
     name: "Notch",
-    tag: "Dynamic Island für Windows",
+    tag: "Dynamic Island für Windows und Mac",
     about:
       "Eine schwarze Form, bündig an der oberen Bildschirmkante: zugeklappt fast unsichtbar, kompakt bei Musik, Timer, Blutzucker oder Spielstand, aufgeklappt mit der Maus oder wenn eine Datei darübergezogen wird. Sie zeigt, was gerade wichtig ist – und verdrängt nichts. Dieses Fenster sind ihre Einstellungen.",
     try: [
@@ -64,7 +64,9 @@ export const APPS = [
     page: "apps/notch/settings.html",
     icon: "assets/icons/notch.png",
     accent: "#ffffff",
-    fallback: { version: "0.2.27", mb: 10.7, url: "https://github.com/NojoMcDybo/notch/releases/latest" },
+    os: "Windows 10/11 und macOS 11 oder neuer (Intel und Apple Silicon)",
+    warn: "Die Installer sind noch nicht signiert: Windows zeigt SmartScreen („Weitere Informationen“ → „Trotzdem ausführen“), auf dem Mac erscheint beim ersten Start eine Warnung – dann Systemeinstellungen › Datenschutz & Sicherheit › „Dennoch öffnen“.",
+    fallback: { version: "0.3.0", mb: 10.7, url: "https://github.com/NojoMcDybo/notch/releases/latest", mac: { mb: 25.4, url: "https://github.com/NojoMcDybo/notch/releases/latest" } },
   },
   {
     id: "haze",
