@@ -2,7 +2,8 @@
 // Aufruf:  node tools/build-apps.mjs [streamdock arena …]   (ohne Argument: alle)
 // Die Quell-Repos bleiben unverändert; gebaut wird mit ihrem eigenen vite und --outDir hierher.
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, readdirSync, rmSync, cpSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync, rmSync, cpSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,12 +15,14 @@ const DEV = process.env.DEV_ROOT || "D:/Dev";
 const APPS = {
   streamdock: { src: "streamdock", shim: true },
   arena: { src: "arena", shim: true, extra: ["soccer-world"] }, // soccer-world: gemeinsame Spielwelt mit der Notch
-  kursbuch: { src: "kursbuch", shim: true },
+  kursbuch: { src: "kursbuch", ref: "v0.4.0", shim: true }, // lokal liegt ein unveröffentlichter Commit (Kursgruppen) obenauf
   folio: { src: "folio-0.13", shim: true, extra: ["folio-docs"] }, // folio-0.13 = Arbeitskopie auf Stand 0.13.0 (D:\Dev\folio selbst steht noch auf 0.8.4); PDF.js und die Glas-Oberfläche; die Beispiel-PDFs sind die Lernseiten-Steckbriefe (tools/make-lern-pdfs.mjs)
   // Notch: echte Oberfläche (Notch selbst = index.html, Einstellungen = settings.html); die schwere Wake-Word-Laufzeit entfällt
-  notch: { src: "notch", shim: true, pages: ["index.html", "settings.html"], prune: /ort-wasm|\.onnx$/, dropDirs: ["wakeword"] },
+  // ref: der Arbeitsordner steht meist auf einem Entwicklungszweig
+  notch: { src: "notch", ref: "v0.3.1", shim: true, pages: ["index.html", "settings.html"], prune: /ort-wasm|\.onnx$/, dropDirs: ["wakeword"] },
   haze: { src: "haze", shim: false },
-  icastico: { src: "Icastico", shim: false }, // hat einen Browser-Modus (Bibliothek im Speicher, Dateien per Auswahl und Download)
+  // ignored: SoundFont steht in .gitignore; das Diktat-Modell (public/voice, 46 MB) bleibt bewusst draußen
+  icastico: { src: "Icastico", ref: "v0.28.1", shim: false, ignored: ["public/sounds/MuseScore_General.sf3"] }, // hat einen Browser-Modus (Bibliothek im Speicher, Dateien per Auswahl und Download)
   // English Daily: eine fertige Seite ohne Build; die Attrappe (shim/app-english-daily.js) ersetzt nur den Host der echten App
   "english-daily": { copy: "english-daily-overlay/ui" },
 };
@@ -40,8 +43,19 @@ for (const id of list) {
     writeFileSync(html, readFileSync(html, "utf8").replace(/<head>/i, `<head>\n<script src="../../shim/app-${id}.js"></script>`));
     continue;
   }
-  console.log(`\n== ${id}: vite build  ${src} -> ${out}`);
-  const r = spawnSync("npx", ["--no-install", "vite", "build", "--base", "./", "--outDir", out, "--emptyOutDir", "--logLevel", "warn"], { cwd: src, stdio: "inherit", shell: true });
+  // ref: genau den veröffentlichten Stand bauen (Tag), unabhängig von Zweig und offenen Änderungen im Arbeitsordner
+  let cwd = src;
+  if (a.ref) {
+    cwd = `${tmpdir().replace(/\\/g, "/")}/portfolio-build-${id}`;
+    rmSync(cwd, { recursive: true, force: true });
+    mkdirSync(cwd, { recursive: true });
+    console.log(`\n== ${id}: ${a.ref} auspacken und npm ci in ${cwd}`);
+    const x = spawnSync(`git -C "${src}" archive ${a.ref} | tar -x -C "${cwd}" && npm ci --no-audit --no-fund --loglevel=error`, { cwd, stdio: "inherit", shell: true });
+    if (x.status !== 0) { console.error(`${id}: Auspacken/Installieren fehlgeschlagen`); process.exitCode = 1; continue; }
+    for (const f of a.ignored ?? []) cpSync(`${src}/${f}`, `${cwd}/${f}`); // nicht im Repo, sonst lädt sie das prebuild-Skript
+  }
+  console.log(`\n== ${id}: vite build  ${cwd} -> ${out}`);
+  const r = spawnSync("npx", ["--no-install", "vite", "build", "--base", "./", "--outDir", out, "--emptyOutDir", "--logLevel", "warn"], { cwd, stdio: "inherit", shell: true });
   if (r.status !== 0) { console.error(`${id}: Build fehlgeschlagen`); process.exitCode = 1; continue; }
   for (const d of a.dropDirs ?? []) rmSync(`${out}/${d}`, { recursive: true, force: true });
   if (a.prune) for (const f of readdirSync(`${out}/assets`)) if (a.prune.test(f)) { rmSync(`${out}/assets/${f}`); console.log("  entfernt:", f); }

@@ -152,9 +152,12 @@ export function createNotchBackend({ toast = () => {} } = {}) {
   const laya = { want: false, state: "off", done: 0, total: 307_000_000, message: "", dir: "" };
   // ---------- iPhone-Austausch (share.rs, iphone.rs): Beispielzustand ----------
   let autostart = false;
-  const phone = { paired: true, ntfy: true, sendto: true };
+  const phone = { paired: true, ntfy: true, sendto: true, ancs: false, cam: false };
   const shareOn = () => !!settings?.share?.on;
   const shareState = () => ({
+    // 0.3.1 (nur Windows): Anrufe/Nachrichten per Bluetooth (ancs.rs) und iPhone als Webcam (cam.rs)
+    ancs: { on: phone.ancs, state: phone.ancs ? "verbunden" : "", device: "iPhone von Nojo", supported: true },
+    cam: { supported: true, on: phone.cam, installed: phone.cam, running: phone.cam, url: phone.cam ? "https://192.168.0.23:53318/cam" : undefined, streaming: false },
     on: shareOn(), running: shareOn(), error: "", ip: "192.168.0.23", port: 53317, alias: "Notch · Demo-PC", folder: settings?.share?.folder || "C:\Users\Demo\Downloads\Notch",
     devices: shareOn() ? [{ fp: "demo-ipad", alias: "iPad von Mira", model: "iPad", kind: "mobile", recent: true }] : [],
     phone: shareOn() && phone.paired ? { name: "iPhone von Nojo", present: true, battery: 82, seen: null, ntfy: phone.ntfy ? "notch-demo" : null, sendto: phone.sendto } : null,
@@ -226,6 +229,9 @@ export function createNotchBackend({ toast = () => {} } = {}) {
     iphone_unpair: () => { phone.paired = false; syncShare(); return null; },
     iphone_push: ({ on }) => { phone.ntfy = !!on; syncShare(); return null; },
     iphone_sendto: ({ on }) => { phone.sendto = !!on; syncShare(); return null; },
+    ancs_set: ({ on }) => { phone.ancs = !!on; syncShare(); return null; },
+    cam_set: ({ on }) => { phone.cam = !!on; syncShare(); return null; },
+    cam_setup: () => demoQr("Notch-iPhone-Kamera"),
     iphone_offer: () => { toast("Auf dem iPhone zum Abholen bereitgelegt (Demo)."); return null; },
     autostart_get: () => autostart,
     autostart_set: ({ on }) => { autostart = !!on; return null; },

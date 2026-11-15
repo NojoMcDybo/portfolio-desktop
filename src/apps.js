@@ -51,7 +51,7 @@ export const APPS = [
     name: "Notch",
     tag: "Dynamic Island für Windows und Mac",
     about:
-      "Eine schwarze Form, bündig an der oberen Bildschirmkante: zugeklappt fast unsichtbar, kompakt bei Musik, Timer, Blutzucker oder Spielstand, aufgeklappt mit der Maus oder wenn eine Datei darübergezogen wird. Sie zeigt, was gerade wichtig ist – und verdrängt nichts. Dieses Fenster sind ihre Einstellungen.",
+      "Eine schwarze Form, bündig an der oberen Bildschirmkante: zugeklappt fast unsichtbar, kompakt bei Musik, Timer, Blutzucker oder Spielstand, aufgeklappt mit der Maus oder wenn eine Datei darübergezogen wird. Sie zeigt, was gerade wichtig ist – und verdrängt nichts. Dazu ein Sprachassistent und der Austausch mit dem iPhone: Dateien und Zwischenablage hin und her, unter Windows auch Anrufe und Nachrichten vom iPhone und das iPhone als Webcam. Dieses Fenster sind ihre Einstellungen.",
     try: [
       "Die echte Notch oben in der Mitte: Maus darüberfahren, sie klappt auf (Musik, Blutzucker, Spiel, Ablage, Timer).",
       "Hier unter „Anzeige“ die Rangliste ändern oder „Ausprobieren“ wählen – die Notch oben folgt sofort.",
@@ -66,7 +66,7 @@ export const APPS = [
     accent: "#ffffff",
     os: "Windows 10/11 und macOS 11 oder neuer (Intel und Apple Silicon)",
     warn: "Die Installer sind noch nicht signiert: Windows zeigt SmartScreen („Weitere Informationen“ → „Trotzdem ausführen“), auf dem Mac erscheint beim ersten Start eine Warnung – dann Systemeinstellungen › Datenschutz & Sicherheit › „Dennoch öffnen“.",
-    fallback: { version: "0.3.0", mb: 10.7, url: "https://github.com/NojoMcDybo/notch/releases/latest", mac: { mb: 25.4, url: "https://github.com/NojoMcDybo/notch/releases/latest" } },
+    fallback: { version: "0.3.1", mb: 10.6, url: "https://github.com/NojoMcDybo/notch/releases/latest", mac: { mb: 24.9, url: "https://github.com/NojoMcDybo/notch/releases/latest" } },
   },
   {
     id: "haze",
@@ -154,13 +154,13 @@ export const APPS = [
     name: "Icastico",
     tag: "Notensatz als individuelle Workstation",
     about:
-      "Notensatz zum schnellen Schreiben statt Suchen – für Gesang, Gitarre und Klavier, angelehnt an Finale, aber neu gedacht. Noten wie in Finale Simple Entry eingeben oder mit der Maus ziehen, neue Partitur mit Titel, Instrumenten, Tonart und Taktart, eigene Bibliothek mit Sammlungen und Papierkorb, Tastenbelegung Finale oder Logic Pro und Wiedergabe mit Instrumentenklängen. Open Source unter der GPL-3.0.",
+      "Notensatz zum schnellen Schreiben statt Suchen – für Gesang, Gitarre und Klavier, angelehnt an Finale, aber neu gedacht. Noten wie in Finale (Simple Entry oder Ziffernblock) oder Logic Pro eingeben, Befehlspalette, Piano-Roll unter der Notenschrift, zwei Stimmen pro System, Gitarrentabulatur mit Stimmungen, Liedtext mit mehreren Strophen, Akkordsymbole, Dynamik und Wiederholungen. Seitenaufbau mit A4-Ansicht, Import von MusicXML und MIDI, Export als PDF, MusicXML und MIDI, Wiedergabe mit Instrumentenklängen und eine eigene Bibliothek mit Sammlungen. Open Source unter der GPL-3.0.",
     try: [
-      "Strg+N legt eine neue Partitur an: Titel, Instrumente, Tonart, Taktart.",
+      "Strg+N legt eine neue Partitur an: Titel, Instrumente, Tonart, Taktart. Strg+K öffnet die Befehlspalette.",
       "Enter startet die Eingabe: Zifferntasten wählen den Notenwert, C D E F G A H die Töne, 0 eine Pause. F1 zeigt alle Tasten.",
-      "Noten mit der Maus ziehen und mit der Transportleiste abspielen, das Tempo lässt sich ändern.",
+      "Strg+Umschalt+A öffnet den Seitenaufbau, Strg+Umschalt+Y schaltet die A4-Ansicht um; abspielen über die Transportleiste.",
     ],
-    demo: "Die Bibliothek liegt hier nur im Speicher des Browsers: Dateien öffnest du per Auswahl und sicherst sie als Download. Die echte App legt sie in Dokumente/Icastico an und aktualisiert sich selbst. Klänge: MuseScore General (MIT).",
+    demo: "Die Bibliothek liegt hier nur im Speicher des Browsers: Dateien öffnest du per Auswahl und sicherst sie als Download. Noten diktieren, MIDI-Keyboard und Drucken gibt es nur in der installierten App, die ihre Bibliothek in Dokumente/Icastico anlegt und sich selbst aktualisiert. Klänge: MuseScore General (MIT).",
     repo: "Icastico",
     stack: "Tauri 2 · Rust · TypeScript · SoundFont",
     size: [1300, 820],
@@ -170,7 +170,7 @@ export const APPS = [
     accent: "#9ac8ff",
     os: "Windows 10/11 und macOS (Apple Silicon)",
     warn: "Die Installer sind noch nicht signiert: Windows zeigt SmartScreen („Weitere Informationen“ → „Trotzdem ausführen“), auf dem Mac öffnet man die App per Rechtsklick → „Öffnen“.",
-    fallback: { version: "0.9.0", mb: 39.5, url: "https://github.com/NojoMcDybo/Icastico/releases/latest", mac: { mb: 39.8, url: "https://github.com/NojoMcDybo/Icastico/releases/latest" } },
+    fallback: { version: "0.28.1", mb: 83.5, url: "https://github.com/NojoMcDybo/Icastico/releases/latest", mac: { mb: 83.6, url: "https://github.com/NojoMcDybo/Icastico/releases/latest" } },
   },
   {
     id: "english-daily",
@@ -197,7 +197,7 @@ export const APPS = [
 // Lernseiten laufen schon auf GitHub Pages: das Fenster zeigt die echte Seite, nichts ist nachgebaut.
 export const LEARN = [
   { id: "trainingswissenschaften", name: "Trainingswissenschaften", sub: "Klausur-Trainer · 16 Module, 779 Lernkarten, 584 Prüfungsfragen", hue: 205, icon: "assets/icons/trainingswissenschaften.png" },
-  { id: "LitCultLingu", name: "LitCult & Linguistik", sub: "Study Coach · Literary and Cultural Studies, Linguistics", hue: 330 },
+  { id: "LitCultLingu", name: "LitCult & Linguistik", sub: "GK2 Study Coach · LitCult II: Poetry, Drama, Narrative, Film, English Linguistics", hue: 330 },
   { id: "Sportpsychologie", name: "Sportpsychologie", sub: "MAP-3-Trainer", hue: 160 },
   { id: "Ringvorlesung_Inklusion", name: "Inklusion im Sport", sub: "Klausur-Trainer zur Ringvorlesung", hue: 28 },
   { id: "tennis-plus-lernwebsite", name: "Tennis Plus", sub: "Prüfungsvorbereitung SoSe 2026", hue: 95 },
