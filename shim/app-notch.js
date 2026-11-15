@@ -11,7 +11,7 @@
   // jeder Befehl geht an das Backend (unbekannte meldet es in der Konsole)
   P.handlers = new Proxy({}, { get: (_, cmd) => (args) => be().invoke(String(cmd), args) });
 
-  const names = ["media", "media-cover", "activities", "sport", "sport-news", "sport-plays", "shelf", "level", "settings", "dock", "dock-preview", "activity-alert", "hover"];
+  const names = ["media", "media-cover", "activities", "sport", "sport-news", "sport-plays", "shelf", "level", "settings", "dock", "dock-preview", "activity-alert", "hover", "share-state"];
   for (const n of names) be().on(n, (p) => P.emit(n, p));
   // Dateien von außen: Tauri meldet sie als tauri://drag-* (der Desktop leitet die Browser-Ereignisse weiter)
   be().on("drag", (d) => P.emit(`tauri://drag-${d.phase}`, { paths: d.paths ?? [], position: { x: d.x ?? 0, y: d.y ?? 0 } }));
