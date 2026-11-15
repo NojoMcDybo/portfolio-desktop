@@ -206,7 +206,7 @@ export const LEARN = [
 ].map((s) => ({ ...s, url: `https://nojomcdybo.github.io/${s.id}/`, repo: s.id, size: [1100, 780] }));
 
 export const MORE = [
-  { id: "nebel", name: "nebel.", sub: "Diabetes-Alltagssimulator für Angehörige · Bildungsprojekt, kein Medizinprodukt", hue: 215 },
+  { id: "nebel", name: "nebel.", sub: "Diabetes-Alltagssimulator für Angehörige · Bildungsprojekt, kein Medizinprodukt", hue: 215, icon: "assets/icons/nebel.png" }, // Icon der iPhone-App (nebel/mobile/ios)
   { id: "gedichte-galaxie", name: "Gedichte-Galaxie", sub: "321 Gedichte als begehbare Galaxie", hue: 285 },
   { id: "courtflow", name: "CourtFlow", sub: "Übungsbibliothek Jugendbasketball U8–U18", hue: 35 },
   { id: "Hooptrack", name: "HoopTrack", sub: "Basketball-Tracking im Browser", hue: 12 },
