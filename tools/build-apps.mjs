@@ -19,7 +19,7 @@ const APPS = {
   folio: { src: "folio-0.13", shim: true, extra: ["folio-docs"] }, // folio-0.13 = Arbeitskopie auf Stand 0.13.0 (D:\Dev\folio selbst steht noch auf 0.8.4); PDF.js und die Glas-Oberfläche; die Beispiel-PDFs sind die Lernseiten-Steckbriefe (tools/make-lern-pdfs.mjs)
   // Notch: echte Oberfläche (Notch selbst = index.html, Einstellungen = settings.html); die schwere Wake-Word-Laufzeit entfällt
   // ref: der Arbeitsordner steht meist auf einem Entwicklungszweig
-  notch: { src: "notch", ref: "v0.3.1", shim: true, pages: ["index.html", "settings.html"], prune: /ort-wasm|\.onnx$/, dropDirs: ["wakeword"] },
+  notch: { src: "notch", ref: "v0.3.2", shim: true, pages: ["index.html", "settings.html"], prune: /ort-wasm|\.onnx$/, dropDirs: ["wakeword"] },
   haze: { src: "haze", shim: false },
   // ignored: SoundFont steht in .gitignore; das Diktat-Modell (public/voice, 46 MB) bleibt bewusst draußen
   icastico: { src: "Icastico", ref: "v0.28.1", shim: false, ignored: ["public/sounds/MuseScore_General.sf3"] }, // hat einen Browser-Modus (Bibliothek im Speicher, Dateien per Auswahl und Download)

@@ -66,7 +66,7 @@ export const APPS = [
     accent: "#ffffff",
     os: "Windows 10/11 und macOS 11 oder neuer (Intel und Apple Silicon)",
     warn: "Die Installer sind noch nicht signiert: Windows zeigt SmartScreen („Weitere Informationen“ → „Trotzdem ausführen“), auf dem Mac erscheint beim ersten Start eine Warnung – dann Systemeinstellungen › Datenschutz & Sicherheit › „Dennoch öffnen“.",
-    fallback: { version: "0.3.1", mb: 10.6, url: "https://github.com/NojoMcDybo/notch/releases/latest", mac: { mb: 24.9, url: "https://github.com/NojoMcDybo/notch/releases/latest" } },
+    fallback: { version: "0.3.2", mb: 10.6, url: "https://github.com/NojoMcDybo/notch/releases/latest", mac: { mb: 24.9, url: "https://github.com/NojoMcDybo/notch/releases/latest" } },
   },
   {
     id: "haze",
